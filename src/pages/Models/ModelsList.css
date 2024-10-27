@@ -1,0 +1,27 @@
+/* ModelsList.css */
+body {
+  font-family: 'Inter', sans-serif; /* Set the font for the entire body */
+}
+
+
+.MuiTypography-h4 {
+  color: #333; /* Dark text for headers */
+}
+
+.MuiCard-root {
+  transition: transform 0.2s; /* Smooth transition for card scaling */
+}
+
+.MuiButton-contained {
+  background-color: #007bff; /* Primary color for buttons */
+  color: white; /* White text for buttons */
+}
+
+.MuiButton-contained:hover {
+  background-color: #0056b3; /* Darker blue on hover */
+}
+
+.dialog-title {
+  font-weight: bold; /* Bold title in dialog */
+  color: #444; /* Darker color for dialog title */
+}
