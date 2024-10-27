@@ -11,7 +11,7 @@ import {
   Box,
 } from '@mui/material';
 import { Link, useLocation } from 'react-router-dom';
-import { Home, Storage, CloudUpload, Train, AutoStories, VideoLibrary ,LiveTv} from '@mui/icons-material';
+import { Home, Storage, CloudUpload, Build, AutoStories, VideoLibrary ,LiveTv} from '@mui/icons-material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 
 // Create a theme with the Inter font
@@ -30,7 +30,7 @@ function Sidebar() {
     { text: 'Home', icon: <Home />, path: '/' },
     { text: 'Models', icon: <Storage />, path: '/models' },
     { text: 'Deployment', icon: <CloudUpload />, path: '/run-script' },
-    { text: 'Train Model', icon: <Train />, path: '/train-model' },
+    { text: 'Train Model', icon: <Build />, path: '/train-model' },
     { text: 'Custom Models', icon: <AutoStories />, path: '/custom-models' },
     { text: 'Infer Video', icon: <VideoLibrary />, path: '/infer-video' },
     { text: 'Infer Custom Model Video', icon: <VideoLibrary />, path: '/infer-custom-video' },
