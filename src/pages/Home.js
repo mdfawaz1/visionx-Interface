@@ -246,23 +246,22 @@ function Home() {
   sx={{ 
     mt: 5, 
     padding: '2rem', 
-    background: 'linear-gradient(135deg, rgba(25, 25, 25, 0.8), rgba(45, 45, 45, 0.8))', // Dark gradient background
+    background: '#FFFFFF', // White background color
     borderRadius: '15px', // Slightly increased border radius
-    boxShadow: '0 10px 20px rgba(0, 0, 0, 0.5)', // Deeper shadow for a floating effect
+    boxShadow: '0 10px 20px rgba(0, 0, 0, 0.2)', // Softer shadow for subtle floating effect
   }}
 >
-  <Typography variant="h6" gutterBottom sx={{ color: 'white', fontWeight: 'bold', textShadow: '1px 1px 5px rgba(0, 0, 0, 0.6)' }}>
+  <Typography variant="h6" gutterBottom sx={{ color: '#333', fontWeight: 'bold', textShadow: '1px 1px 3px rgba(0, 0, 0, 0.1)' }}>
     Dashboard Stats
   </Typography>
   <Grid container spacing={4}>
     <Grid item xs={12} md={4}>
-      <Typography variant="subtitle1" gutterBottom sx={{ color: 'cyan', fontWeight: 'bold' }}>Monthly Training</Typography>
+      <Typography variant="subtitle1" gutterBottom sx={{ color: '#007BFF', fontWeight: 'bold' }}>Monthly Training</Typography>
       <Box sx={{ 
-        background: 'rgba(255, 255, 255, 0.1)', 
+        background: 'rgba(0, 123, 255, 0.05)', 
         borderRadius: '10px', 
         padding: '1rem', 
-        backdropFilter: 'blur(10px)', // Frosted glass effect
-        border: '1px solid rgba(255, 255, 255, 0.2)', // Light border for contrast
+        border: '1px solid rgba(0, 123, 255, 0.2)', // Light border for contrast
       }}>
         <Line data={lineData} options={{
           responsive: true,
@@ -270,25 +269,25 @@ function Home() {
           scales: {
             y: {
               grid: {
-                color: 'rgba(255, 255, 255, 0.2)', // Light grid lines
+                color: 'rgba(0, 0, 0, 0.1)', // Light grid lines
               },
               ticks: {
-                color: 'white', // Tick marks in white
+                color: '#333', // Tick marks in dark color
               },
             },
             x: {
               grid: {
-                color: 'rgba(255, 255, 255, 0.2)', // Light grid lines
+                color: 'rgba(0, 0, 0, 0.1)', // Light grid lines
               },
               ticks: {
-                color: 'white', // Tick marks in white
+                color: '#333', // Tick marks in dark color
               },
             },
           },
           plugins: {
             legend: {
               labels: {
-                color: 'white', // Legend labels in white
+                color: '#333', // Legend labels in dark color
               },
             },
           },
@@ -296,53 +295,87 @@ function Home() {
       </Box>
     </Grid>
     <Grid item xs={12} md={4}>
-      <Typography variant="subtitle1" gutterBottom sx={{ color: 'cyan', fontWeight: 'bold' }}>Total Models Deployed</Typography>
+      <Typography variant="subtitle1" gutterBottom sx={{ color: '#007BFF', fontWeight: 'bold' }}>Total Models Deployed</Typography>
       <Box sx={{ 
-        background: 'rgba(255, 255, 255, 0.1)', 
+        background: 'rgba(0, 123, 255, 0.05)', 
         borderRadius: '10px', 
         padding: '1rem', 
-        backdropFilter: 'blur(10px)', // Frosted glass effect
-        border: '1px solid rgba(255, 255, 255, 0.2)', // Light border for contrast
+        border: '1px solid rgba(0, 123, 255, 0.2)', // Light border for contrast
       }}>
-        <Bar data={barData} options={{
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            y: {
-              grid: {
-                color: 'rgba(255, 255, 255, 0.2)', // Light grid lines
-              },
-              ticks: {
-                color: 'white', // Tick marks in white
-              },
-            },
-            x: {
-              grid: {
-                color: 'rgba(255, 255, 255, 0.2)', // Light grid lines
-              },
-              ticks: {
-                color: 'white', // Tick marks in white
-              },
-            },
-          },
-          plugins: {
-            legend: {
-              labels: {
-                color: 'white', // Legend labels in white
-              },
-            },
-          },
-        }} />
+<Bar data={barData} options={{
+  responsive: true,
+  maintainAspectRatio: false,
+  scales: {
+    y: {
+      beginAtZero: true,
+      grid: {
+        color: 'rgba(0, 0, 0, 0.05)', // Softer grid lines
+      },
+      ticks: {
+        color: '#333', // Darker tick marks
+        font: {
+          size: 12,
+          weight: 'bold',
+        },
+      },
+    },
+    x: {
+      grid: {
+        display: false, // Remove x-axis grid lines for a cleaner look
+      },
+      ticks: {
+        color: '#333', // Darker tick marks
+        font: {
+          size: 12,
+          weight: 'bold',
+        },
+      },
+    },
+  },
+  plugins: {
+    legend: {
+      display: false, // Remove legend to simplify the chart appearance
+    },
+    tooltip: {
+      backgroundColor: 'rgba(0, 123, 255, 0.8)', // Blue background for tooltip
+      titleFont: {
+        size: 14,
+        weight: 'bold',
+      },
+      bodyFont: {
+        size: 12,
+      },
+      cornerRadius: 8,
+    },
+  },
+  elements: {
+    bar: {
+      borderRadius: {
+        topLeft: 8,
+        topRight: 8,
+        bottomLeft: 0,
+        bottomRight: 0, // Only round top corners
+      },
+      backgroundColor: function(context) {
+        const gradient = context.chart.ctx.createLinearGradient(0, 0, 0, context.chart.height);
+        gradient.addColorStop(0, 'rgba(0, 123, 255, 0.9)'); // Start color
+        gradient.addColorStop(1, 'rgba(0, 213, 255, 0.5)'); // End color
+        return gradient;
+      },
+      borderSkipped: false,
+    },
+  },
+}} />
+
       </Box>
     </Grid>
     <Grid item xs={12} md={4}>
-      <Typography variant="subtitle1" gutterBottom sx={{ color: 'cyan', fontWeight: 'bold' }}>Live Training</Typography>
+      <Typography variant="subtitle1" gutterBottom sx={{ color: '#007BFF', fontWeight: 'bold' }}>Live Training</Typography>
       <Box sx={{ 
-        background: 'rgba(255, 255, 255, 0.1)', 
+        background: 'rgba(0, 123, 255, 0.05)', 
         borderRadius: '10px', 
         padding: '1rem', 
-        backdropFilter: 'blur(10px)', // Frosted glass effect
-        border: '1px solid rgba(255, 255, 255, 0.2)', // Light border for contrast
+        border: '1px solid rgba(0, 123, 255, 0.2)', // Light border for contrast
       }}>
         <Pie data={pieData} options={{
           responsive: true,
@@ -350,7 +383,7 @@ function Home() {
           plugins: {
             legend: {
               labels: {
-                color: 'white', // Legend labels in white
+                color: '#333', // Legend labels in dark color
               },
             },
           },
@@ -359,6 +392,7 @@ function Home() {
     </Grid>
   </Grid>
 </Box>
+
 
     </Container>
   );
