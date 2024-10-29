@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
+// import axios from 'axios';
 import { motion } from 'framer-motion';
 import {
   Button,
@@ -134,21 +134,26 @@ function RunScript() {
             <Grid item xs={12} md={6}>
               <Grow in={true} timeout={1000}>
                 <Paper
-                  elevation={4}
+                  elevation={6}
                   sx={{
                     p: 4,
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'center',
                     alignItems: 'center',
-                    bgcolor: 'background.default',
-                    borderRadius: 2,
-                    transition: 'transform 0.2s',
+                    bgcolor: 'linear-gradient(135deg, #e0f7fa 30%, #ffffff 100%)',
+                    borderRadius: 4,
+                    boxShadow: '0px 4px 12px rgba(0, 0, 0, 0.15)',
+                    transition: 'transform 0.3s, box-shadow 0.3s',
                     '&:hover': {
-                      transform: 'scale(1.02)',
+                      transform: 'scale(1.05)',
+                      boxShadow: '0px 6px 16px rgba(0, 0, 0, 0.25)',
                     },
                   }}
                 >
+                  <Typography variant="h5" color="text.primary" sx={{ fontWeight: 'bold', mb: 2 }}>
+                    Select Model Type
+                  </Typography>
                   <RadioGroup
                     aria-label="model-type"
                     name="model-type"
@@ -158,7 +163,7 @@ function RunScript() {
                   >
                     <FormControlLabel
                       value="pretrained"
-                      control={<Radio />}
+                      control={<Radio sx={{ color: 'primary.main' }} />}
                       label={
                         <Box display="flex" alignItems="center">
                           <StorageIcon fontSize="large" color="primary" sx={{ mr: 1 }} />
@@ -168,11 +173,13 @@ function RunScript() {
                     />
                     <FormControlLabel
                       value="custom"
-                      control={<Radio />}
+                      control={<Radio sx={{ color: 'secondary.main' }} />}
                       label={
                         <Box display="flex" alignItems="center">
                           <Code fontSize="large" color="secondary" sx={{ mr: 1 }} />
-                          <Typography variant="h6">Custom Model</Typography>
+                          <Typography variant="h6" sx={{ color: 'text.primary', fontWeight: '500' }}>
+                            Custom Model
+                          </Typography>
                         </Box>
                       }
                     />
@@ -237,44 +244,6 @@ function RunScript() {
                   startAdornment: <Layers color="action" sx={{ mr: 1 }} />,
                 }}
               />
-              {showVideo && (
-                <Box mt={4}>
-                  <Typography variant="h6" gutterBottom>
-                    Live Video Feed
-                  </Typography>
-                  <Paper
-                    elevation={3}
-                    sx={{
-                      width: '100%',
-                      aspectRatio: '16 / 9',
-                      backgroundColor: '#e0e0e0',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                      position: 'relative',
-                      overflow: 'hidden',
-                      borderRadius: 2,
-                    }}
-                  >
-                    <VideoFeed key={`video-feed-${videoRefreshCount}`} serverUrl={serverUrl} />
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      startIcon={<Refresh />}
-                      onClick={() => setVideoRefreshCount((count) => count + 1)}
-                      sx={{
-                        position: 'absolute',
-                        bottom: 16,
-                        right: 16,
-                        boxShadow: 3,
-                      }}
-                    >
-                      Refresh Feed
-                    </Button>
-                  </Paper>
-                </Box>
-              )}
             </Box>
           </Fade>
         );
@@ -346,21 +315,59 @@ function RunScript() {
         </Paper>
 
         {activeStep === steps.length && (
-          <Grow in={true} timeout={1000}>
-            <Paper elevation={6} sx={{ mt: 4, p: 4, borderRadius: 2, backgroundColor: '#e8f5e9' }}>
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <Check sx={{ fontSize: 40, color: '#4caf50', mr: 2 }} />
-                <Box>
-                  <Typography variant="h5" sx={{ color: '#1b5e20', fontWeight: 'bold' }}>
-                    Deployment Successful
-                  </Typography>
-                  <Typography variant="body1" sx={{ color: '#388e3c' }}>
-                    Your model has been successfully deployed and is now operational.
-                  </Typography>
+          <>
+            <Grow in={true} timeout={1000}>
+              <Paper elevation={6} sx={{ mt: 4, p: 4, borderRadius: 2, backgroundColor: '#e8f5e9' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                  <Check sx={{ fontSize: 40, color: '#4caf50', mr: 2 }} />
+                  <Box>
+                    <Typography variant="h5" sx={{ color: '#1b5e20', fontWeight: 'bold' }}>
+                      Deployment Successful
+                    </Typography>
+                    <Typography variant="body1" sx={{ color: '#388e3c' }}>
+                      Your model has been successfully deployed and is now operational.
+                    </Typography>
+                  </Box>
                 </Box>
-              </Box>
-            </Paper>
-          </Grow>
+              </Paper>
+            </Grow>
+            
+            {showVideo && (
+              <Grow in={true} timeout={1000}>
+                <Paper elevation={6} sx={{ mt: 4, p: 4, borderRadius: 2 }}>
+                  <Typography variant="h6" gutterBottom>
+                    Live Video Feed
+                  </Typography>
+                  <Box
+                    sx={{
+                      width: '100%',
+                      aspectRatio: '16/9',
+                      position: 'relative',
+                      overflow: 'hidden',
+                      borderRadius: 2,
+                      bgcolor: '#e0e0e0',
+                    }}
+                  >
+                    <VideoFeed key={`video-feed-${videoRefreshCount}`} serverUrl={serverUrl} />
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      startIcon={<Refresh />}
+                      onClick={() => setVideoRefreshCount((count) => count + 1)}
+                      sx={{
+                        position: 'absolute',
+                        bottom: 16,
+                        right: 16,
+                        boxShadow: 3,
+                      }}
+                    >
+                      Refresh Feed
+                    </Button>
+                  </Box>
+                </Paper>
+              </Grow>
+            )}
+          </>
         )}
       </Container>
     </ThemeProvider>
