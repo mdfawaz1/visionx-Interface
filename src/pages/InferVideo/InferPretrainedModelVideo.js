@@ -1,14 +1,14 @@
 "use client"
 
 import React, { useState, useEffect } from 'react'
-import axios from 'axios'
+// import axios from 'axios'
 import styled from 'styled-components'
 import { motion, AnimatePresence } from 'framer-motion'
 import { createGlobalStyle, ThemeProvider } from 'styled-components'
-
-const api = axios.create({
-  baseURL: 'http://localhost:26000/api/v1',
-})
+import api from '../../api'
+// const api = axios.create({
+//   baseURL: 'http://localhost:26000/api/v1',
+// })
 
 const GlobalStyle = createGlobalStyle`
   body {

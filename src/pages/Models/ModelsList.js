@@ -1,14 +1,14 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import axios from 'axios';
+// import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { Typography, Container, Grid, Card, CardContent, Button, Box } from '@mui/material';
 import { ViewList as ModelsIcon } from '@mui/icons-material';
-
-const api = axios.create({
-  baseURL: 'http://localhost:26000/api/v1',
-});
+import api from '../../api'
+// const api = axios.create({
+//   baseURL: 'http://localhost:26000/api/v1',
+// });
 
 const primaryColor = 'rgba(0, 150, 255, 1)'; // Bright blue
 const secondaryColor = 'rgba(255, 0, 0, 1)'; // Bright red

@@ -5,11 +5,11 @@ import {
 } from '@mui/material';
 import { motion } from 'framer-motion';
 import { CloudUpload as UploadIcon } from '@mui/icons-material';
-import axios from 'axios';
-
-const api = axios.create({
-  baseURL: 'http://localhost:26000/api/v1',
-});
+// import axios from 'axios';
+import api from '../../api'
+// const api = axios.create({
+//   baseURL: 'http://localhost:26000/api/v1',
+// });
 
 const primaryColor = 'rgba(0, 150, 255, 1)'; // Bright blue
 const secondaryColor = 'rgba(255, 0, 0, 1)'; // Bright red
@@ -136,7 +136,7 @@ function AddCustomModel({ onClose, onAdd }) {
         />
         <Box mt={2}>
           <input
-            accept=".h5,.tflite,.pb"
+            accept=".h5,.tflite,.pb,.pt"
             style={{ display: 'none' }}
             id="raised-button-file"
             type="file"

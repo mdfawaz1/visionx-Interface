@@ -4,14 +4,14 @@ import {
   Box, useTheme, useMediaQuery
 } from '@mui/material';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
+// import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Add as AddIcon, ViewList as ModelsIcon } from '@mui/icons-material';
 import AddCustomModel from './AddCustomModel';
-
-const api = axios.create({
-  baseURL: 'http://localhost:26000/api/v1',
-});
+import api from '../../api'
+// const api = axios.create({
+//   baseURL: 'http://localhost:26000/api/v1',
+// });
 
 const primaryColor = 'rgba(0, 150, 255, 1)'; // Bright blue
 const secondaryColor = 'rgba(255, 0, 0, 1)'; // Bright red

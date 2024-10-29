@@ -19,11 +19,11 @@ import {
 } from '@mui/material';
 import { useParams } from 'react-router-dom';
 import { Upload } from 'lucide-react';
-import axios from 'axios';
-
-const api = axios.create({
-  baseURL: 'http://localhost:26000/api/v1',
-});
+// import axios from 'axios';
+import api from '../../api'
+// const api = axios.create({
+//   baseURL: 'http://localhost:26000/api/v1',
+// });
 
 const StyledCard = styled(Card)(({ theme }) => ({
   background: theme.palette.background.paper,

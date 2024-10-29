@@ -38,10 +38,10 @@ import {
   Memory ,
 } from '@mui/icons-material';
 import VideoFeed from './VideoFeed';
-
-const api = axios.create({
-  baseURL: 'http://localhost:26000/api/v1',
-});
+import api from '../api'
+// const api = axios.create({
+//   baseURL: 'http://localhost:26000/api/v1',
+// });
 
 const theme = createTheme({
   palette: {
