@@ -1,18 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   DialogTitle, DialogContent, DialogActions, Button, TextField, CircularProgress, Alert, Typography,
-  Box, styled, useTheme
+  Box, styled, useTheme, Select, MenuItem, FormControl, InputLabel
 } from '@mui/material';
 import { motion } from 'framer-motion';
 import { CloudUpload as UploadIcon } from '@mui/icons-material';
-// import axios from 'axios';
-import api from '../../api'
-// const api = axios.create({
-//   baseURL: 'http://localhost:26000/api/v1',
-// });
+import api from '../../api';
 
-const primaryColor = 'rgba(0, 150, 255, 1)'; // Bright blue
-const secondaryColor = 'rgba(255, 0, 0, 1)'; // Bright red
+const primaryColor = 'rgba(0, 150, 255, 1)';
+const secondaryColor = 'rgba(255, 0, 0, 1)';
 
 const GradientTextField = styled(TextField)({
   '& label.Mui-focused': {
@@ -46,9 +42,16 @@ function AddCustomModel({ onClose, onAdd }) {
   });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
+  const [useCases, setUseCases] = useState([]);
   const theme = useTheme();
 
-  const handleChange = e => {
+  useEffect(() => {
+    api.get('/usecases')
+      .then(response => setUseCases(response.data))
+      .catch(error => console.error('Error fetching use cases:', error));
+  }, []);
+
+  const handleChange = (e) => {
     const { name, value, files } = e.target;
     setFormValues(prev => ({
       ...prev,
@@ -57,6 +60,11 @@ function AddCustomModel({ onClose, onAdd }) {
   };
 
   const handleAdd = () => {
+    if (!formValues.name || !formValues.useCase || !formValues.modelFile) {
+      setMessage({ type: 'error', text: 'Please fill all required fields and upload a model file.' });
+      return;
+    }
+
     setLoading(true);
     const formData = new FormData();
     formData.append('name', formValues.name);
@@ -69,10 +77,10 @@ function AddCustomModel({ onClose, onAdd }) {
         setMessage({ type: 'success', text: response.data.message });
         onAdd(response.data.model);
         setLoading(false);
-        setTimeout(() => onClose(), 2000); // Close after 2 seconds
+        setTimeout(() => onClose(), 2000);
       })
       .catch(error => {
-        setMessage({ type: 'error', text: 'Error adding custom model' });
+        setMessage({ type: 'error', text: error.response?.data?.error || 'Error adding custom model' });
         setLoading(false);
       });
   };
@@ -114,16 +122,22 @@ function AddCustomModel({ onClose, onAdd }) {
           required
           variant="outlined"
         />
-        <GradientTextField
-          label="Use Case"
-          name="useCase"
-          value={formValues.useCase}
-          onChange={handleChange}
-          fullWidth
-          margin="normal"
-          required
-          variant="outlined"
-        />
+        <FormControl fullWidth margin="normal" required variant="outlined">
+          <InputLabel id="use-case-label">Use Case</InputLabel>
+          <Select
+            labelId="use-case-label"
+            name="useCase"
+            value={formValues.useCase}
+            onChange={handleChange}
+            label="Use Case"
+          >
+            {useCases.map((useCase) => (
+              <MenuItem key={useCase._id} value={useCase.name}>
+                {useCase.name}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
         <GradientTextField
           label="Version"
           name="version"
@@ -131,7 +145,6 @@ function AddCustomModel({ onClose, onAdd }) {
           onChange={handleChange}
           fullWidth
           margin="normal"
-          required
           variant="outlined"
         />
         <Box mt={2}>

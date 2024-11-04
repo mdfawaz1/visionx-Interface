@@ -11,19 +11,16 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
+  DialogContentText,
   DialogActions,
   TextField,
   Box,
   styled,
   useTheme
 } from '@mui/material';
-import { useParams } from 'react-router-dom';
-import { Upload } from 'lucide-react';
-// import axios from 'axios';
-import api from '../../api'
-// const api = axios.create({
-//   baseURL: 'http://localhost:26000/api/v1',
-// });
+import { useParams, useNavigate } from 'react-router-dom';
+import { Upload, Trash2 } from 'lucide-react';
+import api from '../../api';
 
 const StyledCard = styled(Card)(({ theme }) => ({
   background: theme.palette.background.paper,
@@ -50,10 +47,12 @@ const GradientButton = styled(Button)(({ theme }) => ({
 
 function CustomModelDetails() {
   const { modelName } = useParams();
+  const navigate = useNavigate();
   const [model, setModel] = useState(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState(null);
   const [openUploadDialog, setOpenUploadDialog] = useState(false);
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [version, setVersion] = useState('');
   const [selectedFile, setSelectedFile] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -97,12 +96,20 @@ function CustomModelDetails() {
     setUploadProgress(0);
   };
 
+  const handleDeleteDialogOpen = () => {
+    setOpenDeleteDialog(true);
+  };
+
+  const handleDeleteDialogClose = () => {
+    setOpenDeleteDialog(false);
+  };
+
   const handleFileSelect = (event) => {
     const file = event.target.files[0];
-    if (file && file.name.endsWith('.pt')) {
+    if (file && (file.name.endsWith('.pt') || file.name.endsWith('.onnx'))) {
       setSelectedFile(file);
     } else {
-      setMessage({ type: 'error', text: 'Please select a valid .pt file' });
+      setMessage({ type: 'error', text: 'Please select a valid .pt or .onnx file' });
       setSelectedFile(null);
     }
   };
@@ -151,6 +158,25 @@ function CustomModelDetails() {
     }
   };
 
+  const handleDeleteModel = async () => {
+    try {
+      setLoading(true);
+      const response = await api.delete(`/custom-model/${modelName}`);
+      setMessage({ type: 'success', text: response.data.message });
+      handleDeleteDialogClose();
+      // Navigate back to the models list or dashboard
+      navigate('/custom-models');
+    } catch (error) {
+      console.error('Error deleting model:', error);
+      setMessage({ 
+        type: 'error', 
+        text: error.response?.data?.error || 'Error deleting model' 
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (!model) return <Typography>Loading...</Typography>;
 
   return (
@@ -172,12 +198,23 @@ function CustomModelDetails() {
           }}>
             {model.name}
           </Typography>
-          <GradientButton
-            startIcon={<Upload />}
-            onClick={handleUploadDialogOpen}
-          >
-            Upload New Version
-          </GradientButton>
+          <Box>
+            <GradientButton
+              startIcon={<Upload />}
+              onClick={handleUploadDialogOpen}
+              sx={{ mr: 2 }}
+            >
+              Upload New Version
+            </GradientButton>
+            <Button
+              variant="outlined"
+              color="error"
+              startIcon={<Trash2 />}
+              onClick={handleDeleteDialogOpen}
+            >
+              Delete Model
+            </Button>
+          </Box>
         </Box>
 
         {message && (
@@ -241,7 +278,7 @@ function CustomModelDetails() {
               />
               <Box sx={{ mt: 2 }}>
                 <input
-                  accept=".pt"
+                  accept=".pt,.onnx"
                   id="model-file-upload"
                   type="file"
                   style={{ display: 'none' }}
@@ -253,7 +290,7 @@ function CustomModelDetails() {
                     component="span"
                     fullWidth
                   >
-                    {selectedFile ? selectedFile.name : 'Select Model File (.pt)'}
+                    {selectedFile ? selectedFile.name : 'Select Model File (.pt,.onnx)'}
                   </Button>
                 </label>
               </Box>
@@ -282,6 +319,30 @@ function CustomModelDetails() {
             >
               {loading ? 'Uploading...' : 'Upload'}
             </GradientButton>
+          </DialogActions>
+        </Dialog>
+
+        <Dialog
+          open={openDeleteDialog}
+          onClose={handleDeleteDialogClose}
+          aria-labelledby="alert-dialog-title"
+          aria-describedby="alert-dialog-description"
+        >
+          <DialogTitle id="alert-dialog-title">
+            {"Delete Custom Model"}
+          </DialogTitle>
+          <DialogContent>
+            <DialogContentText id="alert-dialog-description">
+              Are you sure you want to delete this custom model? This action cannot be undone.
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleDeleteDialogClose} color="primary">
+              Cancel
+            </Button>
+            <Button onClick={handleDeleteModel} color="error" autoFocus>
+              Delete
+            </Button>
           </DialogActions>
         </Dialog>
       </Box>

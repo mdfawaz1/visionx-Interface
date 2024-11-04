@@ -1,15 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { CircularProgress, Box } from '@mui/material';
 
-const VideoFeed = ({ serverUrl }) => {
+const VideoFeed = ({ serverUrl, streamId }) => {  // Added streamId as a prop
   const [videoSrc, setVideoSrc] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (!streamId) {
+      console.error('No streamId provided');
+      return;
+    }
+    console.log("stream_ids-->",streamId);
     // Add a timestamp to prevent caching
-    const url = `${serverUrl}/video_feed?${new Date().getTime()}`;
+    const url = `${serverUrl}/video_feed/${streamId}?${new Date().getTime()}`;
     setVideoSrc(url);
-  }, [serverUrl]);
+  }, [serverUrl, streamId]);
 
   const handleImageLoad = () => {
     setIsLoading(false);
