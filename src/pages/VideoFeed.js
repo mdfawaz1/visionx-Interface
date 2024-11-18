@@ -13,6 +13,7 @@ const VideoFeed = ({ serverUrl, streamId }) => {  // Added streamId as a prop
     console.log("stream_ids-->",streamId);
     // Add a timestamp to prevent caching
     const url = `${serverUrl}/video_feed/${streamId}?${new Date().getTime()}`;
+    console.log("url-->",url);
     setVideoSrc(url);
   }, [serverUrl, streamId]);
 

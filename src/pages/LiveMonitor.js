@@ -563,6 +563,11 @@ const serverUrls = [
   { url: 'http://localhost:5007', name: 'Server 1' },
   { url: 'http://localhost:5008', name: 'Server 2' }
 ];
+// const serverUrls = [
+//   { url: 'http://backend:5007', name: 'Server 1' },
+//   { url: 'http://backend:5008', name: 'Server 2' }
+// ];
+
 
 export default function LiveMonitor() {
   const [streams, setStreams] = useState({});
