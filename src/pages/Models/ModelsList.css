@@ -1,27 +1,178 @@
-/* ModelsList.css */
-body {
-  font-family: 'Inter', sans-serif; /* Set the font for the entire body */
+.models-list-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1a202c, #2d3748, #4a5568);
+  color: white;
+  padding: 2rem;
+  position: relative;
+  overflow: hidden;
 }
 
-
-.MuiTypography-h4 {
-  color: #333; /* Dark text for headers */
+.background-animation {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  z-index: 0;
 }
 
-.MuiCard-root {
-  transition: transform 0.2s; /* Smooth transition for card scaling */
+.background-circle {
+  position: absolute;
+  background-color: rgba(66, 153, 225, 0.3);
+  border-radius: 50%;
+  mix-blend-mode: multiply;
+  filter: blur(30px);
+  opacity: 0.3;
+  animation: pulse 5s infinite alternate;
 }
 
-.MuiButton-contained {
-  background-color: #007bff; /* Primary color for buttons */
-  color: white; /* White text for buttons */
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 0.3; }
+  100% { transform: scale(1.1); opacity: 0.1; }
 }
 
-.MuiButton-contained:hover {
-  background-color: #0056b3; /* Darker blue on hover */
+.content {
+  position: relative;
+  z-index: 1;
 }
 
-.dialog-title {
-  font-weight: bold; /* Bold title in dialog */
-  color: #444; /* Darker color for dialog title */
+.main-title {
+  font-size: 3rem;
+  font-weight: bold;
+  margin-bottom: 2rem;
+  text-align: center;
+  background: linear-gradient(to right, #63b3ed, #4299e1, #3182ce);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.models-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+.model-card {
+  background: linear-gradient(135deg, rgba(49, 130, 206, 0.1), rgba(66, 153, 225, 0.1));
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(66, 153, 225, 0.3);
+  transition: all 0.3s ease;
+}
+
+.model-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2);
+}
+
+.model-name {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+  background: linear-gradient(to right, #63b3ed, #4299e1);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.model-info {
+  font-size: 0.9rem;
+  color: #a0aec0;
+  margin-bottom: 0.5rem;
+}
+
+.view-details-btn {
+  background: linear-gradient(to right, #4299e1, #3182ce);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.view-details-btn:hover {
+  background: linear-gradient(to right, #3182ce, #2c5282);
+}
+
+.loading-spinner {
+  border: 4px solid rgba(66, 153, 225, 0.3);
+  border-top: 4px solid #3182ce;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  animation: spin 1s linear infinite;
+  margin: 2rem auto;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.error-message, .no-models-message {
+  background-color: rgba(49, 130, 206, 0.1);
+  border: 1px solid rgba(66, 153, 225, 0.3);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  text-align: center;
+}
+
+.retry-btn {
+  background-color: #e53e3e;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  margin-top: 1rem;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(5px);
+}
+
+.model-details {
+  background: linear-gradient(135deg, rgba(49, 130, 206, 0.1), rgba(66, 153, 225, 0.1));
+  border-radius: 1rem;
+  padding: 2rem;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(66, 153, 225, 0.3);
+}
+
+.model-details-name {
+  font-size: 2rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+  background: linear-gradient(to right, #63b3ed, #4299e1);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.model-details-info {
+  margin-bottom: 1rem;
+  color: #e2e8f0;
+}
+
+.close-btn {
+  background: linear-gradient(to right, #4299e1, #3182ce);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.close-btn:hover {
+  background: linear-gradient(to right, #3182ce, #2c5282);
 }
