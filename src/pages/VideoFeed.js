@@ -1,43 +1,84 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { CircularProgress, Box } from '@mui/material';
 
-const VideoFeed = ({ serverUrl, streamId }) => {  // Added streamId as a prop
-  const [videoSrc, setVideoSrc] = useState('');
+const VideoFeed = ({ serverUrl, streamId }) => {
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const imgRef = useRef(null);
 
   useEffect(() => {
     if (!streamId) {
-      console.error('No streamId provided');
+      setError('No streamId provided');
       return;
     }
-    console.log("stream_ids-->",streamId);
-    // Add a timestamp to prevent caching
-    const url = `${serverUrl}/video_feed/${streamId}?${new Date().getTime()}`;
-    console.log("url-->",url);
-    setVideoSrc(url);
+
+    // Construct the video feed URL
+    const url = `${serverUrl}/video_feed/${streamId}`;
+    console.log("Connecting to video feed:", url);
+
+    // Create a new image element
+    if (imgRef.current) {
+      // Set up the image source with a timestamp to prevent caching
+      imgRef.current.src = `${url}?t=${new Date().getTime()}`;
+      
+      // Set up error handling for the stream
+      imgRef.current.onerror = () => {
+        console.error('Error loading video feed');
+        setError('Failed to load video feed');
+        setIsLoading(false);
+      };
+    }
+
+    return () => {
+      // Cleanup: remove the image source when component unmounts
+      if (imgRef.current) {
+        imgRef.current.src = '';
+      }
+    };
   }, [serverUrl, streamId]);
 
   const handleImageLoad = () => {
     setIsLoading(false);
+    setError(null);
   };
 
   return (
-    <div>
+    <div style={{ position: 'relative', minHeight: '300px' }}>
       {isLoading && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+        <Box 
+          sx={{ 
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)'
+          }}
+        >
           <CircularProgress />
         </Box>
       )}
+      {error && (
+        <Box 
+          sx={{ 
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            color: 'red'
+          }}
+        >
+          {error}
+        </Box>
+      )}
       <img
-        src={videoSrc}
+        ref={imgRef}
         alt="Live Inference"
         onLoad={handleImageLoad}
         style={{
           width: '100%',
-          maxWidth: '800px',
-          border: '2px solid #ccc',
+          height: '300px',
+          objectFit: 'cover',
           borderRadius: '8px',
-          display: isLoading ? 'none' : 'block',
+          display: isLoading || error ? 'none' : 'block',
         }}
       />
     </div>
