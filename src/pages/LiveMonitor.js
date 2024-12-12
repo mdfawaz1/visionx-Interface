@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled, { createGlobalStyle, keyframes } from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import VideoFeed from './VideoFeed';
+import api from '../api';
 
 const GlobalStyle = createGlobalStyle`
   body {
@@ -10,6 +11,26 @@ const GlobalStyle = createGlobalStyle`
     font-family: 'Roboto', sans-serif;
     background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
     color: #ffffff;
+  }
+`;
+
+const Notification = styled.div`
+  position: fixed;
+  top: 65px;
+  right: 20px;
+  background: linear-gradient(45deg, #00c6ff, #0072ff);
+  color: #ffffff;
+  padding: 1rem;
+  border-radius: 5px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+  z-index: 1000;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  opacity: 0.9;
+  transform: translateY(0);
+
+  &:hover {
+    opacity: 1;
+    transform: translateY(-5px);
   }
 `;
 
@@ -168,13 +189,19 @@ const LiveIndicator = styled.div`
 `;
 
 const serverUrls = [
+<<<<<<< Updated upstream
   { url: 'http://localhost:5008', name: 'Server 1' },{ url: 'http://localhost:5009', name: 'Server 1' }
+=======
+  { url: 'http://localhost:5008', name: 'Server 1' },
+  { url: 'http://localhost:5009', name: 'Server 2' },  { url: 'http://localhost:5010', name: 'Server 3' }, 
+>>>>>>> Stashed changes
 ];
 
 export default function LiveMonitor() {
   const [streams, setStreams] = useState({});
   const [selectedStreams, setSelectedStreams] = useState([]);
   const [selectedServer, setSelectedServer] = useState(null);
+<<<<<<< Updated upstream
   const [error, setError] = useState(null);
 
   const fetchStreams = async () => {
@@ -218,6 +245,9 @@ export default function LiveMonitor() {
       setError('Failed to fetch streams');
     }
   };
+=======
+  const [notification, setNotification] = useState(null);
+>>>>>>> Stashed changes
 
   useEffect(() => {
     const initialTimeout = setTimeout(() => {
@@ -249,9 +279,33 @@ export default function LiveMonitor() {
     setSelectedServer(serverUrl === selectedServer ? null : serverUrl);
   };
 
+  const stopServer = (port) => {
+    api.post('/python-server/stop', { port })
+      .then(response => {
+        console.log(`Server on port ${port} stopped successfully:`, response.data);
+        setStreams(prevStreams => {
+          const updatedStreams = { ...prevStreams };
+          const serverUrl = Object.keys(updatedStreams).find(url => new URL(url).port === port);
+          if (serverUrl) {
+            delete updatedStreams[serverUrl];
+          }
+          return updatedStreams;
+        });
+        setSelectedServer(null); // Deselect the server if it was selected
+        setNotification(`Server on port ${port} stopped successfully.`);
+        setTimeout(() => setNotification(null), 3000); // Clear notification after 3 seconds
+      })
+      .catch(error => {
+        console.error(`Error stopping server on port ${port}:`, error);
+        setNotification(`Failed to stop server on port ${port}.`);
+        setTimeout(() => setNotification(null), 3000); // Clear notification after 3 seconds
+      });
+  };
+
   return (
     <>
       <GlobalStyle />
+      {notification && <Notification>{notification}</Notification>}
       <Container
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -265,21 +319,35 @@ export default function LiveMonitor() {
           Live Monitor
         </Title>
         <CatalogContainer>
-          {Object.entries(streams).map(([serverUrl, { name, streams: streamIds }]) => (
-            <ServerBox
-              key={serverUrl}
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ type: 'spring', stiffness: 100, delay: 0.2 }}
-              onClick={() => handleServerClick(serverUrl)}
-            >
-              <ServerTitle>{name}</ServerTitle>
-              <StreamCount>{streamIds.length} Streams</StreamCount>
-            </ServerBox>
-          ))}
+          {Object.entries(streams).map(([serverUrl, { name, streams: streamIds }]) => {
+            const port = new URL(serverUrl).port;
+            return (
+              <ServerBox
+                key={serverUrl}
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ type: 'spring', stiffness: 100, delay: 0.2 }}
+                onClick={() => handleServerClick(serverUrl)}
+              >
+                <ServerTitle>{name}</ServerTitle>
+                <StreamCount>{streamIds.length} Streams</StreamCount>
+                <Button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent triggering server selection
+                    stopServer(port);
+                  }}
+                  style={{ marginTop: '1rem' }}
+                >
+                  Stop Server
+                </Button>
+              </ServerBox>
+            );
+          })}
         </CatalogContainer>
         <AnimatePresence>
-          {selectedServer && (
+          {selectedServer && streams[selectedServer] && (
             <StreamList
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}

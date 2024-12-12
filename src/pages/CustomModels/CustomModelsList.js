@@ -13,10 +13,146 @@ import api from '../../api'
 //   baseURL: 'http://localhost:26000/api/v1',
 // });
 
-const primaryColor = 'rgba(0, 150, 255, 1)'; // Bright blue
-const secondaryColor = 'rgba(255, 0, 0, 1)'; // Bright red
+const primaryColor = '#0066FF'; // Vibrant blue
+const secondaryColor = '#FF2E93'; // Vibrant pink
+const tertiaryColor = '#6B37FF'; // Purple
+const gradientBg = `linear-gradient(135deg, ${primaryColor}, ${tertiaryColor}, ${secondaryColor})`;
+const softGradientBg = 'linear-gradient(145deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)';
 
 const MotionCard = motion(Card);
+
+const ModelCard = ({ model, onClick }) => (
+  <motion.div
+    layout
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    exit={{ opacity: 0, y: -20 }}
+    whileHover={{ y: -5 }}
+    transition={{ duration: 0.3 }}
+  >
+    <Card 
+      onClick={onClick}
+      sx={{
+        height: '100%',
+        background: '#ffffff',
+        borderRadius: '20px',
+        boxShadow: '0 0 20px rgba(0,0,0,0.05)',
+        position: 'relative',
+        overflow: 'hidden',
+        '&:hover': {
+          boxShadow: '0 8px 30px rgba(0, 102, 255, 0.2)',
+          '& .model-gradient': {
+            height: '100%',
+            opacity: 0.08,
+            background: `${gradientBg}, ${softGradientBg}`
+          }
+        }
+      }}
+    >
+      <Box 
+        className="model-gradient"
+        sx={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: '4px',
+          background: gradientBg,
+          transition: 'all 0.3s ease-in-out',
+          opacity: 1,
+          filter: 'brightness(1.2)'
+        }}
+      />
+      <CardContent sx={{ p: 3 }}>
+        <Box sx={{ mb: 2 }}>
+          <Typography 
+            variant="h6"
+            sx={{ 
+              fontWeight: 600,
+              color: '#0F172A',
+              mb: 0.5
+            }}
+          >
+            {model.name}
+          </Typography>
+          <Typography 
+            variant="body2"
+            sx={{ 
+              color: '#64748B',
+              fontSize: '0.875rem'
+            }}
+          >
+            {model.useCase}
+          </Typography>
+        </Box>
+
+        <Box sx={{ 
+          display: 'flex',
+          alignItems: 'center',
+          gap: 2,
+          mb: 3
+        }}>
+          <Box sx={{
+            px: 2,
+            py: 0.5,
+            borderRadius: '20px',
+            background: 'rgba(14, 165, 233, 0.1)',
+            color: primaryColor,
+            fontSize: '0.75rem',
+            fontWeight: 500
+          }}>
+            Custom Model
+          </Box>
+          <Box sx={{
+            px: 2,
+            py: 0.5,
+            borderRadius: '20px',
+            background: 'rgba(14, 165, 233, 0.1)',
+            color: primaryColor,
+            fontSize: '0.75rem',
+            fontWeight: 500
+          }}>
+          <Typography 
+            variant="caption"
+            sx={{ 
+              color: '#FF0000',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 0.5
+            }}
+          >
+            {`Version ${model.currentVersion || '1.0'}`}
+
+          </Typography>
+        </Box>
+        </Box>
+
+        <Button 
+          component={Link} 
+          to={`/custom-models/${model.name}`}
+          fullWidth
+          sx={{
+            background: gradientBg,
+            borderRadius: '10px',
+            textTransform: 'none',
+            fontWeight: 500,
+            py: 1,
+            color: 'white',
+            transition: 'all 0.3s ease-in-out',
+            '&:hover': {
+              background: gradientBg,
+              boxShadow: '0 4px 20px rgba(0, 102, 255, 0.4)',
+              filter: 'brightness(1.1)',
+              transform: 'translateY(-2px)'
+            }
+          }}
+        >
+          View Details
+        </Button>
+      </CardContent>
+    </Card>
+  </motion.div>
+);
 
 function CustomModelsList() {
   const [models, setModels] = useState([]);
@@ -86,6 +222,12 @@ function CustomModelsList() {
           open={openAddDialog} 
           onClose={() => setOpenAddDialog(false)}
           fullScreen={isMobile}
+          PaperProps={{
+            style: {
+              background: 'transparent',
+              boxShadow: 'none'
+            }
+          }}
         >
           <AddCustomModel onClose={() => setOpenAddDialog(false)} onAdd={handleAddModel} />
         </Dialog>
@@ -112,46 +254,10 @@ function CustomModelsList() {
             <AnimatePresence>
               {models.map(model => (
                 <Grid item xs={12} sm={6} md={4} key={model._id}>
-                  <MotionCard
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    transition={{ duration: 0.3 }}
-                    sx={{
-                      height: '100%',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      background: 'white',
-                      borderRadius: '10px',
-                      boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-                      transition: '0.3s',
-                      '&:hover': {
-                        boxShadow: '0 8px 15px rgba(0, 0, 0, 0.2)',
-                        transform: 'translateY(-5px)',
-                      },
-                    }}
-                  >
-                    <CardContent sx={{ flexGrow: 1 }}>
-                      <Typography variant="h6" sx={{ color: primaryColor, mb: 1 }}>{model.name}</Typography>
-                      <Typography variant="body2" sx={{ color: 'text.secondary' }}>Use Case: {model.useCase}</Typography>
-                    </CardContent>
-                    <CardActions>
-                      <Button 
-                        component={Link} 
-                        to={`/custom-models/${model.name}`} 
-                        size="small"
-                        sx={{
-                          background: `linear-gradient(45deg, ${secondaryColor} 30%, ${primaryColor} 90%)`,
-                          color: 'white',
-                          '&:hover': {
-                            background: `linear-gradient(45deg, ${primaryColor} 30%, ${secondaryColor} 90%)`,
-                          },
-                        }}
-                      >
-                        View Details
-                      </Button>
-                    </CardActions>
-                  </MotionCard>
+                  <ModelCard
+                    model={model}
+                    onClick={() => {}}
+                  />
                 </Grid>
               ))}
             </AnimatePresence>

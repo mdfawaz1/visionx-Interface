@@ -1,123 +1,442 @@
-
-
-import React, { useState, useEffect } from 'react'
-// import axios from 'axios'
-import styled from 'styled-components'
-import { motion, AnimatePresence } from 'framer-motion'
-import { createGlobalStyle, ThemeProvider } from 'styled-components'
+import React, { useState, useEffect, useRef } from 'react'
+import { motion, AnimatePresence, useAnimation } from 'framer-motion'
 import api from '../../api'
-// const api = axios.create({
-//   baseURL: 'http://localhost:26000/api/v1',
-// })
 
-const GlobalStyle = createGlobalStyle`
-  body {
-    margin: 0;
-    padding: 0;
-    font-family: Arial, sans-serif;
-  }
-`
-
-const theme = {
-  colors: {
-    primary: '#0072ff',
-    secondary: '#ff0080',
-    background: 'linear-gradient(135deg, #00c6ff, #0072ff, #ff0080)',
-  },
+// Reusable button component with hover animation
+function AnimatedButton({ onClick, disabled, style, children }) {
+  return (
+    <motion.button
+      onClick={onClick}
+      disabled={disabled}
+      whileHover={!disabled ? { scale: 1.02 } : {}}
+      whileTap={!disabled ? { scale: 0.98 } : {}}
+      style={{
+        padding: '1rem',
+        border: 'none',
+        borderRadius: '10px',
+        color: 'white',
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        transition: 'all 0.3s ease',
+        ...style
+      }}
+    >
+      {children}
+    </motion.button>
+  )
 }
 
-const Container = styled(motion.div)`
-  height: 93vh;
-  width: 84vw;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background: ${props => props.theme.colors.background};
-  padding: 0rem;
-  color: white;
-  margin-top: -5rem;
-`
+// Enhanced ModelCard with hover effects and more info
+function ModelCard({ model, selected, onClick, details, onNext }) {
+  const controls = useAnimation();
+  
+  const handleHover = async () => {
+    await controls.start({
+      scale: 1.02,
+      transition: { duration: 0.2 }
+    });
+  };
 
-const Title = styled(motion.h1)`
-  font-size: 3rem;
-  margin-bottom: 2rem;
-  text-align: center;
-  text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
-`
+  const handleHoverEnd = async () => {
+    await controls.start({
+      scale: 1,
+      transition: { duration: 0.2 }
+    });
+  };
 
-const Form = styled(motion.div)`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 100%;
-  max-width: 500px;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  border-radius: 20px;
-  padding: 2rem;
-  box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-`
+  const modelDetails = details || {};
+  const versions = modelDetails.versions || [];
+  const currentVersion = modelDetails.currentVersion;
 
-const Input = styled(motion.input)`
-  width: 100%;
-  padding: 1rem;
-  margin-bottom: 1rem;
-  border: none;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
-  font-size: 1rem;
+  return (
+    <motion.div 
+      onClick={onClick}
+      animate={controls}
+      onHoverStart={handleHover}
+      onHoverEnd={handleHoverEnd}
+      style={{
+        padding: '1.8rem',
+        marginBottom: '1.2rem',
+        background: `linear-gradient(145deg, 
+          ${selected ? 'rgba(255, 255, 255, 0.25)' : 'rgba(255, 255, 255, 0.05)'} 0%, 
+          ${selected ? 'rgba(255, 255, 255, 0.15)' : 'rgba(255, 255, 255, 0.02)'} 100%)`,
+        borderRadius: '20px',
+        cursor: 'pointer',
+        width: '100%',
+        transition: 'all 0.3s ease',
+        border: selected ? '2px solid rgba(255, 255, 255, 0.5)' : '2px solid transparent',
+        position: 'relative',
+        overflow: 'hidden',
+        backdropFilter: 'blur(10px)',
+        boxShadow: selected ? '0 8px 32px rgba(31, 38, 135, 0.2)' : 'none'
+      }}
+    >
+      <div style={{ display: 'flex', gap: '1.5rem' }}>
+        {/* Model Icon/Avatar */}
+        <div style={{
+          width: '60px',
+          height: '60px',
+          borderRadius: '15px',
+          background: 'linear-gradient(45deg, #ff0080, #ff8c00)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: '1.8rem',
+          flexShrink: 0,
+          boxShadow: '0 4px 15px rgba(255, 0, 128, 0.3)'
+        }}>
+          {model.icon || model.name.charAt(0).toUpperCase()}
+        </div>
 
-  &::placeholder {
-    color: rgba(255, 255, 255, 0.7);
-  }
-`
+        {/* Model Info */}
+        <div style={{ flex: 1 }}>
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'flex-start',
+            marginBottom: '0.8rem'
+          }}>
+            <div>
+              <h3 style={{ 
+                margin: '0', 
+                fontSize: '1.3rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}>
+                {model.name}
+              </h3>
+              {modelDetails.useCase && (
+                <div style={{ 
+                  fontSize: '0.9rem', 
+                  opacity: 0.7,
+                  marginTop: '0.3rem' 
+                }}>
+                 Use Case: {modelDetails.useCase}
+                </div>
+              )}
+            </div>
 
-const Select = styled(motion.select)`
-  width: 100%;
-  padding: 1rem;
-  margin-bottom: 1rem;
-  border: none;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
-  font-size: 1rem;
+            {selected && (
+              <motion.div
+                initial={{ scale: 0, rotate: -180 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ type: "spring", stiffness: 200 }}
+                style={{
+                  background: 'linear-gradient(45deg, #4ade80, #22c55e)',
+                  borderRadius: '50%',
+                  width: '28px',
+                  height: '28px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '14px',
+                  boxShadow: '0 2px 10px rgba(74, 222, 128, 0.3)',
+                  flexShrink: 0
+                }}
+              >
+                ✓
+              </motion.div>
+            )}
+          </div>
 
-  option {
-    background: ${props => props.theme.colors.primary};
-  }
-`
+          {/* Version Information */}
+          <div style={{
+            background: 'rgba(0, 0, 0, 0.2)',
+            borderRadius: '12px',
+            padding: '1rem',
+            marginTop: '1rem'
+          }}>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '0.8rem'
+            }}>
+              <div style={{ 
+                fontSize: '0.9rem', 
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem' 
+              }}>
+                <span style={{ opacity: 0.7 }}>Current:</span>
+                <span style={{ 
+                  color: '#4ade80',
+                  background: 'rgba(74, 222, 128, 0.1)',
+                  padding: '0.2rem 0.6rem',
+                  borderRadius: '50px',
+                }}>
+                  v{currentVersion}
+                </span>
+              </div>
+              <div style={{
+                fontSize: '0.8rem',
+                opacity: 0.6
+              }}>
+                {versions.length} version{versions.length !== 1 ? 's' : ''}
+              </div>
+            </div>
 
-const Button = styled(motion.button)`
-  padding: 1rem 2rem;
-  border: none;
-  border-radius: 50px;
-  background: linear-gradient(90deg, ${props => props.theme.colors.secondary}, #ff8c00);
-  color: white;
-  font-size: 1rem;
-  font-weight: bold;
-  cursor: pointer;
-  transition: all 0.3s ease;
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.5rem'
+            }}>
+              {versions.slice(0, 3).map((version, index) => (
+                <div
+                  key={version._id}
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '0.5rem',
+                    background: version.version === currentVersion ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+                    borderRadius: '8px',
+                    fontSize: '0.9rem'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    {version.version === currentVersion && (
+                      <span style={{ color: '#4ade80', fontSize: '0.8rem' }}>●</span>
+                    )}
+                    <span>v{version.version}</span>
+                  </div>
+                  <div style={{ opacity: 0.7, fontSize: '0.8rem' }}>
+                    {new Date(version.createdAt).toLocaleDateString()}
+                  </div>
+                </div>
+              ))}
+              {versions.length > 3 && (
+                <div style={{ 
+                  textAlign: 'center', 
+                  fontSize: '0.8rem', 
+                  opacity: 0.6,
+                  marginTop: '0.3rem' 
+                }}>
+                  +{versions.length - 3} more versions
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
 
-  &:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
-  }
+      {selected && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          style={{
+            marginTop: '1.5rem',
+            borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+            paddingTop: '1.5rem',
+            display: 'flex',
+            justifyContent: 'flex-end'
+          }}
+        >
+          <AnimatedButton
+            onClick={(e) => {
+              e.stopPropagation();
+              onNext();
+            }}
+            style={{
+              background: 'linear-gradient(90deg, #ff0080, #ff8c00)',
+              padding: '0.8rem 2rem',
+              fontSize: '1rem',
+              fontWeight: 'bold',
+              borderRadius: '50px'
+            }}
+          >
+            Next Step →
+          </AnimatedButton>
+        </motion.div>
+      )}
+    </motion.div>
+  );
+}
 
-  &:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-  }
-`
+function StepIndicator({ currentStep, steps }) {
+  return (
+    <div style={{ 
+      display: 'flex', 
+      gap: '1rem', 
+      marginBottom: '2rem',
+      width: '100%'
+    }}>
+      {steps.map((step, index) => (
+        <div
+          key={step}
+          style={{
+            flex: 1,
+            position: 'relative'
+          }}
+        >
+          <motion.div
+            initial={false}
+            animate={{
+              opacity: currentStep === index ? 1 : 0.5,
+              y: currentStep === index ? 0 : 5
+            }}
+            style={{
+              textAlign: 'center',
+              paddingBottom: '0.5rem'
+            }}
+          >
+            <div style={{ 
+              fontSize: '0.9rem', 
+              marginBottom: '0.3rem' 
+            }}>
+              Step {index + 1}
+            </div>
+            {step}
+          </motion.div>
+          <motion.div
+            initial={false}
+            animate={{
+              width: currentStep >= index ? '100%' : '0%'
+            }}
+            style={{
+              height: '2px',
+              background: 'white',
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              transition: 'width 0.4s ease'
+            }}
+          />
+        </div>
+      ))}
+    </div>
+  )
+}
 
-const Message = styled(motion.div)`
-  margin-top: 1rem;
-  padding: 1rem;
-  border-radius: 10px;
-  background: ${({ type }) => (type === 'success' ? 'rgba(0, 255, 0, 0.2)' : 'rgba(255, 0, 0, 0.2)')};
-  color: white;
-`
+// Enhanced VideoPreview with more features
+function VideoPreview({ file, onRemove }) {
+  const [preview, setPreview] = useState('');
+  const videoRef = useRef(null);
+  const [duration, setDuration] = useState(0);
+  const [videoInfo, setVideoInfo] = useState(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+
+  useEffect(() => {
+    if (file) {
+      const url = URL.createObjectURL(file);
+      setPreview(url);
+      
+      // Get video metadata
+      const video = document.createElement('video');
+      video.src = url;
+      video.onloadedmetadata = () => {
+        setVideoInfo({
+          duration: Math.round(video.duration),
+          width: video.videoWidth,
+          height: video.videoHeight
+        });
+      };
+
+      return () => URL.revokeObjectURL(url);
+    }
+  }, [file]);
+
+  const formatDuration = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const handleTimeUpdate = (e) => {
+    setCurrentTime(e.target.currentTime);
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      style={{
+        width: '100%',
+        background: 'rgba(0, 0, 0, 0.3)',
+        borderRadius: '15px',
+        overflow: 'hidden',
+        position: 'relative'
+      }}
+    >
+      <video
+        ref={videoRef}
+        src={preview}
+        style={{
+          width: '100%',
+          borderRadius: '15px',
+          marginBottom: '-6px',
+          background: '#000'
+        }}
+        controls
+        onTimeUpdate={handleTimeUpdate}
+        onPlay={() => setIsPlaying(true)}
+        onPause={() => setIsPlaying(false)}
+      />
+      
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        padding: '1rem',
+        background: 'linear-gradient(rgba(0,0,0,0.8), transparent)',
+        color: 'white',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        opacity: isPlaying ? 0 : 1,
+        transition: 'opacity 0.3s ease'
+      }}>
+        <div style={{ fontSize: '0.9rem' }}>
+          Preview Mode
+        </div>
+        {videoInfo && (
+          <div style={{ 
+            background: 'rgba(255, 255, 255, 0.2)',
+            padding: '0.3rem 0.8rem',
+            borderRadius: '50px',
+            fontSize: '0.8rem'
+          }}>
+            {videoInfo.width}x{videoInfo.height}
+          </div>
+        )}
+      </div>
+      
+      <div style={{
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        padding: '1rem',
+        background: 'linear-gradient(transparent, rgba(0,0,0,0.8))',
+        color: 'white',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'flex-end'
+      }}>
+        <div>
+          <h4 style={{ margin: '0 0 0.5rem 0' }}>{file.name}</h4>
+          {videoInfo && (
+            <div style={{ fontSize: '0.9rem', opacity: 0.8 }}>
+              {formatDuration(videoInfo.duration)} • {videoInfo.width}x{videoInfo.height}
+            </div>
+          )}
+        </div>
+        <AnimatedButton
+          onClick={onRemove}
+          style={{
+            background: 'rgba(255, 255, 255, 0.2)',
+            backdropFilter: 'blur(10px)',
+            padding: '0.5rem 1rem'
+          }}
+        >
+          Change Video
+        </AnimatedButton>
+      </div>
+    </motion.div>
+  );
+}
 
 function InferCustomModelVideo() {
   const [videoFile, setVideoFile] = useState(null)
@@ -125,104 +444,444 @@ function InferCustomModelVideo() {
   const [models, setModels] = useState([])
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState(null)
+  const [dragActive, setDragActive] = useState(false)
+  const [progress, setProgress] = useState(0)
+  const [currentStep, setCurrentStep] = useState(0)
+  const [modelDetails, setModelDetails] = useState({});
+
+  const containerStyle = {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    width: '100vw',
+    height: '100vh',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    background: 'linear-gradient(135deg, #00c6ff, #0072ff, #ff0080)',
+    padding: '2rem',
+    paddingTop: '5rem',
+    paddingLeft: '15rem',
+    color: 'white',
+    overflow: 'hidden',
+    zIndex: 1000
+  }
+
+  const formStyle = {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    width: '95%',
+    maxWidth: '800px',
+    height: '90vh',
+    background: 'rgba(255, 255, 255, 0.15)',
+    backdropFilter: 'blur(10px)',
+    borderRadius: '25px',
+    padding: '2rem',
+    boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
+    overflow: 'hidden',
+    position: 'relative'
+  }
 
   useEffect(() => {
-    // Fetch custom models
+    // Fetch list of models
     api.get('/custom-models')
-      .then(response => setModels(response.data))
-      .catch(error => console.error('Error fetching custom models:', error))
-  }, [])
+      .then(response => {
+        setModels(response.data);
+        // Fetch details for each model
+        response.data.forEach(model => {
+          api.get(`/custom-model/${model.name}`)
+            .then(detailResponse => {
+              setModelDetails(prev => ({
+                ...prev,
+                [model.name]: detailResponse.data
+              }));
+            })
+            .catch(error => console.error(`Error fetching details for ${model.name}:`, error));
+        });
+      })
+      .catch(error => {
+        console.error('Error fetching models:', error);
+        setMessage({ type: 'error', text: 'Failed to load models' });
+      });
+  }, []);
 
-  const handleInfer = () => {
+  const handleDrag = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setDragActive(e.type === "dragenter" || e.type === "dragover")
+  }
+
+  const handleDrop = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setDragActive(false)
+    
+    if (e.dataTransfer.files?.[0]) {
+      const file = e.dataTransfer.files[0]
+      if (file.type.startsWith('video/')) {
+        setVideoFile(file)
+      } else {
+        setMessage({ type: 'error', text: 'Please upload a video file' })
+      }
+    }
+  }
+
+  const handleInfer = async () => {
     if (!videoFile || !modelName) {
       setMessage({ type: 'error', text: 'Please select a video file and model.' })
       return
     }
 
     setLoading(true)
+    setProgress(0)
     const formData = new FormData()
     formData.append('videoFile', videoFile)
 
-    api.post(`/custom-model/${modelName}/upload-video`, formData)
-      .then(response => {
-        setMessage({ type: 'success', text: response.data.message })
-        setLoading(false)
+    try {
+      const response = await api.post(`/custom-model/${modelName}/upload-video`, formData, {
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+          setProgress(percentCompleted)
+        }
       })
-      .catch(error => {
-        setMessage({ type: 'error', text: 'Error processing video' })
-        setLoading(false)
-      })
+      
+      setMessage({ type: 'success', text: response.data.message })
+    } catch (error) {
+      setMessage({ type: 'error', text: error.response?.data?.message || 'Error processing video' })
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const renderStep = () => {
+    switch (currentStep) {
+      case 0:
+        return (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            style={{ 
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column'
+            }}
+          >
+            <h2 style={{ 
+              marginBottom: '0.5rem', 
+              textAlign: 'center',
+              fontSize: '1.8rem' 
+            }}>
+              Select a Model
+            </h2>
+            <p style={{ 
+              textAlign: 'center', 
+              opacity: 0.8,
+              marginBottom: '2rem'
+            }}>
+              Choose the AI model that best fits your needs
+            </p>
+
+            <div style={{ 
+              flex: 1,
+              overflowY: 'auto',
+              padding: '0.5rem',
+              marginBottom: '1.5rem'
+            }}>
+              {models.map(model => (
+                <ModelCard
+                  key={model._id}
+                  model={model}
+                  selected={model.name === modelName}
+                  onClick={() => setModelName(model.name)}
+                  details={modelDetails[model.name]}
+                  onNext={() => setCurrentStep(1)}
+                />
+              ))}
+            </div>
+
+            <AnimatedButton
+              onClick={() => modelName && setCurrentStep(1)}
+              disabled={!modelName}
+              style={{
+                width: '100%',
+                background: modelName 
+                  ? 'linear-gradient(90deg, #ff0080, #ff8c00)' 
+                  : 'rgba(255, 255, 255, 0.1)',
+                opacity: modelName ? 1 : 0.5,
+                fontSize: '1.1rem',
+                fontWeight: 'bold'
+              }}
+            >
+              {modelName 
+                ? `Continue with ${modelName}` 
+                : 'Select a Model to Continue'}
+            </AnimatedButton>
+          </motion.div>
+        )
+
+      case 1:
+        return (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            style={{ 
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column'
+            }}
+          >
+            <h2 style={{ marginBottom: '1.5rem', textAlign: 'center' }}>Upload Video</h2>
+            {videoFile ? (
+              <VideoPreview file={videoFile} onRemove={() => setVideoFile(null)} />
+            ) : (
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onDragEnter={handleDrag}
+                onDragLeave={handleDrag}
+                onDragOver={handleDrag}
+                onDrop={handleDrop}
+                style={{
+                  width: '100%',
+                  minHeight: '260px',
+                  border: `3px dashed ${dragActive ? '#ffffff' : 'rgba(255, 255, 255, 0.3)'}`,
+                  borderRadius: '15px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexDirection: 'column',
+                  background: dragActive 
+                    ? 'rgba(255, 255, 255, 0.15)' 
+                    : 'linear-gradient(145deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)',
+                  transition: 'all 0.3s ease',
+                  cursor: 'pointer',
+                  backdropFilter: 'blur(10px)',
+                  boxShadow: dragActive 
+                    ? '0 8px 32px rgba(31, 38, 135, 0.3)' 
+                    : '0 4px 16px rgba(31, 38, 135, 0.1)'
+                }}
+              >
+                <motion.div
+                  animate={{
+                    y: dragActive ? -10 : 0,
+                    scale: dragActive ? 1.1 : 1
+                  }}
+                  transition={{ type: "spring", stiffness: 300 }}
+                >
+                  <div style={{ 
+                    fontSize: '4rem', 
+                    marginBottom: '1rem',
+                    opacity: dragActive ? 1 : 0.7
+                  }}>
+                    {dragActive ? '📥' : '📁'}
+                  </div>
+                  <p style={{ 
+                    fontSize: '1.2rem', 
+                    marginBottom: '0.5rem',
+                    color: dragActive ? '#fff' : 'rgba(255,255,255,0.8)'
+                  }}>
+                    {dragActive ? 'Drop your video here' : 'Drag and drop your video here'}
+                  </p>
+                  <p style={{ 
+                    fontSize: '0.9rem', 
+                    opacity: 0.6,
+                    marginBottom: '1rem'
+                  }}>
+                    or
+                  </p>
+                  <input
+                    type="file"
+                    accept="video/*"
+                    onChange={e => setVideoFile(e.target.files?.[0])}
+                    style={{ display: 'none' }}
+                    id="video-input"
+                  />
+                  <label 
+                    htmlFor="video-input"
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.2)',
+                      padding: '0.8rem 1.5rem',
+                      borderRadius: '50px',
+                      cursor: 'pointer',
+                      fontSize: '0.9rem',
+                      transition: 'all 0.3s ease',
+                      border: '1px solid rgba(255,255,255,0.2)'
+                    }}
+                  >
+                    Browse Files
+                  </label>
+                </motion.div>
+              </motion.div>
+            )}
+            
+            <div style={{ 
+              display: 'flex', 
+              gap: '1rem', 
+              marginTop: '1.5rem'
+            }}>
+              <AnimatedButton
+                onClick={() => setCurrentStep(0)}
+                style={{
+                  flex: 1,
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  backdropFilter: 'blur(10px)'
+                }}
+              >
+                Back
+              </AnimatedButton>
+              <AnimatedButton
+                onClick={() => videoFile && setCurrentStep(2)}
+                disabled={!videoFile}
+                style={{
+                  flex: 2,
+                  background: videoFile 
+                    ? 'linear-gradient(90deg, #ff0080, #ff8c00)' 
+                    : 'rgba(255, 255, 255, 0.1)',
+                  opacity: videoFile ? 1 : 0.5,
+                  backdropFilter: 'blur(10px)'
+                }}
+              >
+                Continue
+              </AnimatedButton>
+            </div>
+          </motion.div>
+        )
+
+      case 2:
+        return (
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            style={{ 
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              textAlign: 'center'
+            }}
+          >
+            <h2 style={{ marginBottom: '1rem' }}>Process Video</h2>
+            <div style={{ marginBottom: '2rem' }}>
+              <p>Model: <strong>{modelName}</strong></p>
+              <p>Video: <strong>{videoFile.name}</strong></p>
+            </div>
+            {loading ? (
+              <div style={{ width: '100%' }}>
+                <div style={{
+                  width: '100%',
+                  height: '4px',
+                  background: 'rgba(255, 255, 255, 0.2)',
+                  borderRadius: '2px',
+                  overflow: 'hidden'
+                }}>
+                  <div style={{
+                    width: `${progress}%`,
+                    height: '100%',
+                    background: 'linear-gradient(90deg, #ff0080, #ff8c00)',
+                    transition: 'width 0.3s ease'
+                  }} />
+                </div>
+                <p style={{ marginTop: '1rem' }}>{progress}% Complete</p>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', gap: '1rem' }}>
+                <button
+                  onClick={() => setCurrentStep(1)}
+                  style={{
+                    flex: 1,
+                    padding: '1rem',
+                    background: 'rgba(255, 255, 255, 0.1)',
+                    border: 'none',
+                    borderRadius: '10px',
+                    color: 'white',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Back
+                </button>
+                <button
+                  onClick={handleInfer}
+                  style={{
+                    flex: 2,
+                    padding: '1rem',
+                    background: 'linear-gradient(90deg, #ff0080, #ff8c00)',
+                    border: 'none',
+                    borderRadius: '10px',
+                    color: 'white',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Start Processing
+                </button>
+              </div>
+            )}
+          </motion.div>
+        )
+
+      default:
+        return null
+    }
   }
 
   return (
-    <Container
+    <motion.div 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
+      style={containerStyle}
     >
-      <Title
-        initial={{ y: -50 }}
-        animate={{ y: 0 }}
-        transition={{ type: 'spring', stiffness: 100 }}
-      >
-        Run Custom Model on Video
-      </Title>
-      <Form
+      <motion.div
         initial={{ scale: 0.9 }}
         animate={{ scale: 1 }}
         transition={{ type: 'spring', stiffness: 100 }}
+        style={formStyle}
       >
+        <StepIndicator 
+          currentStep={currentStep} 
+          steps={['Select Model', 'Upload Video', 'Process']} 
+        />
+
+        <AnimatePresence mode="wait">
+          {renderStep()}
+        </AnimatePresence>
+
         <AnimatePresence>
           {message && (
-            <Message
-              type={message.type}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              style={{
+                marginTop: '1rem',
+                padding: '1rem',
+                borderRadius: '10px',
+                background: message.type === 'success' ? 'rgba(0, 255, 0, 0.2)' : 'rgba(255, 0, 0, 0.2)',
+                color: 'white',
+                width: '100%',
+                textAlign: 'center',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem'
+              }}
             >
+              <span style={{ fontSize: '1.2rem' }}>
+                {message.type === 'success' ? '✓' : '⚠️'}
+              </span>
               {message.text}
-            </Message>
+            </motion.div>
           )}
         </AnimatePresence>
-        <Input
-          type="file"
-          accept="video/*"
-          onChange={e => setVideoFile(e.target.files[0])}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-        />
-        {videoFile && <p>{videoFile.name}</p>}
-        <Select
-          value={modelName}
-          onChange={e => setModelName(e.target.value)}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          <option value="">Select Custom Model</option>
-          {models.map(model => (
-            <option key={model._id} value={model.name}>
-              {model.name}
-            </option>
-          ))}
-        </Select>
-        <Button
-          onClick={handleInfer}
-          disabled={loading}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-        >
-          {loading ? 'Processing...' : 'Run Model'}
-        </Button>
-      </Form>
-    </Container>
+      </motion.div>
+    </motion.div>
   )
 }
 
-export default function App() {
-  return (
-    <ThemeProvider theme={theme}>
-      <GlobalStyle />
-      <InferCustomModelVideo />
-    </ThemeProvider>
-  )
-}
+export default InferCustomModelVideo

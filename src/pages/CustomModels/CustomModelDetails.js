@@ -22,27 +22,65 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Upload, Trash2 } from 'lucide-react';
 import api from '../../api';
 
+const primaryColor = '#0066FF';
+const secondaryColor = '#FF2E93';
+const tertiaryColor = '#6B37FF';
+const gradientBg = `linear-gradient(135deg, ${primaryColor}, ${tertiaryColor}, ${secondaryColor})`;
+const softGradientBg = 'linear-gradient(145deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)';
+
 const StyledCard = styled(Card)(({ theme }) => ({
-  background: theme.palette.background.paper,
-  borderRadius: theme.shape.borderRadius,
-  boxShadow: theme.shadows[3],
-  transition: 'transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out',
+  background: '#ffffff',
+  borderRadius: '20px',
+  boxShadow: '0 0 20px rgba(0,0,0,0.05)',
+  position: 'relative',
+  overflow: 'hidden',
+  transition: 'all 0.3s ease-in-out',
   '&:hover': {
     transform: 'translateY(-5px)',
-    boxShadow: theme.shadows[6],
+    boxShadow: '0 8px 30px rgba(0, 102, 255, 0.2)',
   },
+  '&::before': {
+    content: '""',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '4px',
+    background: gradientBg,
+    opacity: 0.8
+  }
 }));
 
 const GradientButton = styled(Button)(({ theme }) => ({
-  background: `linear-gradient(45deg, ${theme.palette.primary.main} 30%, ${theme.palette.secondary.main} 90%)`,
-  border: 0,
+  background: gradientBg,
   color: 'white',
-  height: 48,
-  padding: '0 30px',
-  boxShadow: '0 3px 5px 2px rgba(255, 105, 135, .3)',
+  padding: '10px 24px',
+  borderRadius: '12px',
+  textTransform: 'none',
+  fontWeight: 500,
+  transition: 'all 0.3s ease-in-out',
   '&:hover': {
-    background: `linear-gradient(45deg, ${theme.palette.secondary.main} 30%, ${theme.palette.primary.main} 90%)`,
-  },
+    background: gradientBg,
+    boxShadow: '0 4px 20px rgba(0, 102, 255, 0.4)',
+    filter: 'brightness(1.1)',
+    transform: 'translateY(-2px)'
+  }
+}));
+
+const ModelFileTag = styled(Box)(({ theme }) => ({
+  display: 'inline-flex',
+  alignItems: 'center',
+  background: 'rgba(0, 102, 255, 0.1)',
+  color: primaryColor,
+  padding: '4px 12px',
+  borderRadius: '12px',
+  fontSize: '0.875rem',
+  fontWeight: 500,
+  gap: '6px',
+  '& svg': {
+    width: 16,
+    height: 16
+  }
 }));
 
 function CustomModelDetails() {
@@ -177,24 +215,30 @@ function CustomModelDetails() {
     }
   };
 
+  const getModelFileName = (filePath) => {
+    if (!filePath) return 'model.pt';
+    return filePath.split('/').pop(); // Gets the last part of the path
+  };
+
   if (!model) return <Typography>Loading...</Typography>;
 
   return (
     <Container maxWidth="xl" sx={{ mt: 4, mb: 4 }}>
       <Box sx={{
         background: 'white',
-        borderRadius: '15px',
+        borderRadius: '30px',
         padding: '2rem',
         marginBottom: '2rem',
-        marginTop:'-5rem',
-        boxShadow: '0 10px 20px rgba(0, 0, 0, 0.1)',
+        marginTop: '-5rem',
+        boxShadow: '0 10px 40px rgba(0,0,0,0.05)',
       }}>
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
           <Typography variant="h4" sx={{ 
             color: 'transparent',
-            backgroundImage: `linear-gradient(45deg, ${theme.palette.primary.main} 30%, ${theme.palette.secondary.main} 90%)`,
+            backgroundImage: gradientBg,
             backgroundClip: 'text',
             WebkitBackgroundClip: 'text',
+            fontWeight: 600
           }}>
             {model.name}
           </Typography>
@@ -211,6 +255,13 @@ function CustomModelDetails() {
               color="error"
               startIcon={<Trash2 />}
               onClick={handleDeleteDialogOpen}
+              sx={{
+                borderRadius: '12px',
+                borderWidth: '2px',
+                '&:hover': {
+                  borderWidth: '2px'
+                }
+              }}
             >
               Delete Model
             </Button>
@@ -221,17 +272,54 @@ function CustomModelDetails() {
           <Alert 
             severity={message.type} 
             onClose={() => setMessage(null)}
-            sx={{ mb: 2 }}
+            sx={{ 
+              mb: 2,
+              borderRadius: '12px',
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+            }}
           >
             {message.text}
           </Alert>
         )}
 
-        <Typography variant="body1" sx={{ mb: 1 }}>Use Case: {model.useCase}</Typography>
-        <Typography variant="body1" sx={{ mb: 2 }}>Current Version: {model.currentVersion}</Typography>
+        <Box sx={{ 
+          display: 'flex', 
+          gap: 2, 
+          mb: 4,
+          flexWrap: 'wrap'
+        }}>
+          <Box sx={{
+            background: 'rgba(14, 165, 233, 0.1)',
+            padding: '0.75rem 1.5rem',
+            borderRadius: '15px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1
+          }}>
+            <Typography variant="body2" color={primaryColor}>
+              Use Case: {model.useCase}
+            </Typography>
+          </Box>
+          <Box sx={{
+            background: 'rgba(14, 165, 233, 0.1)',
+            padding: '0.75rem 1.5rem',
+            borderRadius: '15px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1
+          }}>
+            <Typography variant="body2" color={primaryColor}>
+              Current Version: {model.currentVersion}
+            </Typography>
+          </Box>
+        </Box>
 
-        <Typography variant="h6" gutterBottom sx={{ mt: 4, mb: 2 }}>
-          Versions:
+        <Typography variant="h6" gutterBottom sx={{ 
+          mb: 3,
+          color: '#0F172A',
+          fontWeight: 600
+        }}>
+          Versions
         </Typography>
 
         <Grid container spacing={3}>
@@ -239,17 +327,61 @@ function CustomModelDetails() {
             <Grid item xs={12} sm={6} md={4} key={version._id}>
               <StyledCard>
                 <CardContent>
-                  <Typography variant="h6" sx={{ mb: 1 }}>Version {version.version}</Typography>
-                  <Typography variant="body2" sx={{ mb: 2 }}>
-                    Created At: {new Date(version.createdAt).toLocaleString()}
-                  </Typography>
-                  <GradientButton
-                    onClick={() => handleSwitchVersion(version.version)}
-                    disabled={model.currentVersion === version.version || loading}
-                    fullWidth
-                  >
-                    {model.currentVersion === version.version ? 'Current Version' : 'Switch Version'}
-                  </GradientButton>
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="h6" sx={{ 
+                      fontWeight: 600,
+                      color: '#0F172A',
+                      mb: 0.5
+                    }}>
+                      Version {version.version}
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: '#64748B', mb: 2 }}>
+                      Created: {new Date(version.createdAt).toLocaleString()}
+                    </Typography>
+                    <ModelFileTag>
+                      <svg 
+                        xmlns="http://www.w3.org/2000/svg" 
+                        width="16" 
+                        height="16" 
+                        viewBox="0 0 24 24" 
+                        fill="none" 
+                        stroke="currentColor" 
+                        strokeWidth="2" 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round"
+                      >
+                        <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                      </svg>
+                      {getModelFileName(version.CustomModelfilePath)}
+                    </ModelFileTag>
+                  </Box>
+                  
+                  {model.currentVersion === version.version ? (
+                    <Box sx={{
+                      background: 'rgba(74, 222, 128, 0.1)',
+                      color: '#4ade80',
+                      padding: '0.5rem 1rem',
+                      borderRadius: '10px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 1,
+                      mb: 2
+                    }}>
+                      <span style={{ fontSize: '1.2rem' }}>✓</span>
+                      Current Version
+                    </Box>
+                  ) : (
+                    <GradientButton
+                      onClick={() => handleSwitchVersion(version.version)}
+                      disabled={loading}
+                      fullWidth
+                      sx={{ mb: 2 }}
+                    >
+                      Switch to this Version
+                    </GradientButton>
+                  )}
                 </CardContent>
               </StyledCard>
             </Grid>

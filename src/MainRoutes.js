@@ -10,6 +10,8 @@ import CustomModelDetails from './pages/CustomModels/CustomModelDetails';
 import InferCustomModelVideo from './pages/InferVideo/InferCustomModelVideo';
 import InferPretrainedModelVideo from './pages/InferVideo/InferPretrainedModelVideo';
 import LiveMonitor from './pages/LiveMonitor';
+import Forecasting from './pages/Forecasting/Forecasting';
+
 function MainRoutes() {
   return (
     <main style={{ paddingLeft: 240, paddingTop: 64 }}>
@@ -23,6 +25,7 @@ function MainRoutes() {
         <Route path="/infer-video" element={<InferPretrainedModelVideo />} />
         <Route path="/infer-custom-video" element={<InferCustomModelVideo />} />
         <Route path="/live-monitor" element={<LiveMonitor />} />
+        <Route path="/forecasting" element={<Forecasting />} />
         
         {/* Add any other routes */}
       </Routes>

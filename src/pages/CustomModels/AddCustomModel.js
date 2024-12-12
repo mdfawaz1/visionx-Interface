@@ -7,14 +7,19 @@ import { motion } from 'framer-motion';
 import { CloudUpload as UploadIcon } from '@mui/icons-material';
 import api from '../../api';
 
-const primaryColor = 'rgba(0, 150, 255, 1)';
-const secondaryColor = 'rgba(255, 0, 0, 1)';
+const primaryColor = '#0066FF';
+const secondaryColor = '#FF2E93';
+const tertiaryColor = '#6B37FF';
+const gradientBg = `linear-gradient(135deg, ${primaryColor}, ${tertiaryColor}, ${secondaryColor})`;
 
 const GradientTextField = styled(TextField)({
   '& label.Mui-focused': {
     color: primaryColor,
   },
   '& .MuiOutlinedInput-root': {
+    '&:hover fieldset': {
+      borderColor: primaryColor,
+    },
     '&.Mui-focused fieldset': {
       borderColor: primaryColor,
     },
@@ -22,14 +27,18 @@ const GradientTextField = styled(TextField)({
 });
 
 const GradientButton = styled(Button)({
-  background: `linear-gradient(45deg, ${secondaryColor} 30%, ${primaryColor} 90%)`,
+  background: gradientBg,
   border: 0,
   color: 'white',
   height: 48,
   padding: '0 30px',
-  boxShadow: '0 3px 5px 2px rgba(255, 105, 135, .3)',
+  boxShadow: '0 3px 5px 2px rgba(0, 102, 255, 0.3)',
+  transition: 'all 0.3s ease-in-out',
   '&:hover': {
-    background: `linear-gradient(45deg, ${primaryColor} 30%, ${secondaryColor} 90%)`,
+    background: gradientBg,
+    boxShadow: '0 4px 20px rgba(0, 102, 255, 0.4)',
+    filter: 'brightness(1.1)',
+    transform: 'translateY(-2px)'
   },
 });
 
@@ -87,18 +96,33 @@ function AddCustomModel({ onClose, onAdd }) {
 
   return (
     <Box sx={{ 
-      background: 'white', 
-      borderRadius: theme.shape.borderRadius,
-      boxShadow: theme.shadows[5],
+      background: gradientBg,
+      borderRadius: '20px',
+      boxShadow: '0 8px 32px rgba(31, 38, 135, 0.15)',
+      overflow: 'hidden'
     }}>
       <DialogTitle sx={{ 
-        background: `linear-gradient(45deg, ${secondaryColor} 30%, ${primaryColor} 90%)`,
+        background: 'transparent',
         color: 'white',
-        fontWeight: 'bold'
+        fontWeight: 'bold',
+        py: 2,
+        position: 'relative',
+        '&::after': {
+          content: '""',
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: '4px',
+          background: 'rgba(255, 255, 255, 0.2)'
+        }
       }}>
         Add Custom Model
       </DialogTitle>
-      <DialogContent>
+      <DialogContent sx={{ 
+        p: 3,
+        background: 'white'
+      }}>
         <Box my={2}>
           {message && (
             <motion.div
@@ -106,7 +130,14 @@ function AddCustomModel({ onClose, onAdd }) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <Alert severity={message.type} onClose={() => setMessage(null)}>
+              <Alert 
+                severity={message.type} 
+                onClose={() => setMessage(null)}
+                sx={{
+                  borderRadius: '10px',
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)'
+                }}
+              >
                 {message.text}
               </Alert>
             </motion.div>
@@ -147,7 +178,7 @@ function AddCustomModel({ onClose, onAdd }) {
           margin="normal"
           variant="outlined"
         />
-        <Box mt={2}>
+        <Box mt={3}>
           <input
             accept=".h5,.tflite,.pb,.pt"
             style={{ display: 'none' }}
@@ -157,23 +188,51 @@ function AddCustomModel({ onClose, onAdd }) {
             onChange={handleChange}
           />
           <label htmlFor="raised-button-file">
-            <GradientButton component="span" fullWidth startIcon={<UploadIcon />}>
-              Upload Model File
+            <GradientButton 
+              component="span" 
+              fullWidth 
+              startIcon={<UploadIcon />}
+              sx={{
+                borderRadius: '12px',
+                height: '56px',
+                fontSize: '1rem'
+              }}
+            >
+              {formValues.modelFile ? formValues.modelFile.name : 'Upload Model File'}
             </GradientButton>
           </label>
         </Box>
-        {formValues.modelFile && (
-          <Typography variant="body2" sx={{ mt: 1, color: primaryColor }}>
-            Selected file: {formValues.modelFile.name}
-          </Typography>
-        )}
       </DialogContent>
-      <DialogActions sx={{ padding: theme.spacing(2) }}>
-        <Button onClick={onClose} disabled={loading} sx={{ color: secondaryColor }}>
+      <DialogActions sx={{ 
+        padding: 3,
+        background: 'white',
+        borderTop: '1px solid rgba(0, 0, 0, 0.05)'
+      }}>
+        <Button 
+          onClick={onClose} 
+          disabled={loading}
+          sx={{ 
+            color: 'text.secondary',
+            '&:hover': {
+              background: 'rgba(0, 0, 0, 0.05)'
+            }
+          }}
+        >
           Cancel
         </Button>
-        <GradientButton onClick={handleAdd} disabled={loading}>
-          {loading ? <CircularProgress size={24} /> : 'Add Model'}
+        <GradientButton 
+          onClick={handleAdd} 
+          disabled={loading}
+          sx={{
+            minWidth: '120px',
+            borderRadius: '10px'
+          }}
+        >
+          {loading ? (
+            <CircularProgress size={24} sx={{ color: 'white' }} />
+          ) : (
+            'Add Model'
+          )}
         </GradientButton>
       </DialogActions>
     </Box>
