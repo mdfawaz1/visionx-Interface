@@ -189,20 +189,17 @@ const LiveIndicator = styled.div`
 `;
 
 const serverUrls = [
-<<<<<<< Updated upstream
-  { url: 'http://localhost:5008', name: 'Server 1' },{ url: 'http://localhost:5009', name: 'Server 1' }
-=======
   { url: 'http://localhost:5008', name: 'Server 1' },
-  { url: 'http://localhost:5009', name: 'Server 2' },  { url: 'http://localhost:5010', name: 'Server 3' }, 
->>>>>>> Stashed changes
+  { url: 'http://localhost:5009', name: 'Server 2' },
+  { url: 'http://localhost:5010', name: 'Server 3' }
 ];
 
 export default function LiveMonitor() {
   const [streams, setStreams] = useState({});
   const [selectedStreams, setSelectedStreams] = useState([]);
   const [selectedServer, setSelectedServer] = useState(null);
-<<<<<<< Updated upstream
   const [error, setError] = useState(null);
+  const [notification, setNotification] = useState(null);
 
   const fetchStreams = async () => {
     try {
@@ -245,9 +242,6 @@ export default function LiveMonitor() {
       setError('Failed to fetch streams');
     }
   };
-=======
-  const [notification, setNotification] = useState(null);
->>>>>>> Stashed changes
 
   useEffect(() => {
     const initialTimeout = setTimeout(() => {
