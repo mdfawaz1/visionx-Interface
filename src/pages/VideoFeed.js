@@ -5,6 +5,7 @@ const VideoFeed = ({ serverUrl, streamId }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const imgRef = useRef(null);
+  const wsRef = useRef(null);
 
   useEffect(() => {
     if (!streamId) {
@@ -12,27 +13,48 @@ const VideoFeed = ({ serverUrl, streamId }) => {
       return;
     }
 
-    // Construct the video feed URL
-    const url = `${serverUrl}/video_feed/${streamId}`;
-    console.log("Connecting to video feed:", url);
+    // Convert HTTP/HTTPS URL to WebSocket URL
+    const wsUrl = serverUrl.replace(/^http/, 'ws');
+    const socketUrl = `${wsUrl}/ws/video_feed/${streamId}`;
+    
+    console.log("Connecting to WebSocket:", socketUrl);
 
-    // Create a new image element
-    if (imgRef.current) {
-      // Set up the image source with a timestamp to prevent caching
-      imgRef.current.src = `${url}?t=${new Date().getTime()}`;
-      
-      // Set up error handling for the stream
-      imgRef.current.onerror = () => {
-        console.error('Error loading video feed');
-        setError('Failed to load video feed');
-        setIsLoading(false);
-      };
-    }
+    // Create WebSocket connection
+    wsRef.current = new WebSocket(socketUrl);
+
+    wsRef.current.onopen = () => {
+      console.log('WebSocket connection established');
+      setError(null);
+    };
+
+    wsRef.current.onmessage = (event) => {
+      if (imgRef.current) {
+        // Convert blob to base64 and update image
+        const reader = new FileReader();
+        reader.onload = () => {
+          imgRef.current.src = reader.result;
+          setIsLoading(false);
+        };
+        reader.readAsDataURL(event.data);
+      }
+    };
+
+    wsRef.current.onerror = (error) => {
+      console.error('WebSocket error:', error);
+      setError('Failed to connect to video feed');
+      setIsLoading(false);
+    };
+
+    wsRef.current.onclose = () => {
+      console.log('WebSocket connection closed');
+      setError('Video feed connection closed');
+      setIsLoading(false);
+    };
 
     return () => {
-      // Cleanup: remove the image source when component unmounts
-      if (imgRef.current) {
-        imgRef.current.src = '';
+      // Cleanup: close WebSocket connection when component unmounts
+      if (wsRef.current) {
+        wsRef.current.close();
       }
     };
   }, [serverUrl, streamId]);
