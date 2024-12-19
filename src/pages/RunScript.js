@@ -21,7 +21,8 @@ import {
   AccordionSummary,
   AccordionDetails,
   Chip,
-  Stack
+  Stack,
+  Checkbox
 } from '@mui/material';
 import {
   Settings,
@@ -55,6 +56,7 @@ import {
   ExpandMore as ExpandMoreIcon
 } from '@mui/icons-material';
 import api from '../api';
+import { Link } from 'react-router-dom';
 
 const primaryColor = '#0066FF';
 const secondaryColor = '#FF2E93';
@@ -319,6 +321,197 @@ const AIAssistant = ({ step }) => {
   );
 };
 
+// Add this outside the component to prevent recreation
+const DeviceItem = React.memo(({ device, isSelected, onToggleSelect }) => (
+  <Box
+    sx={{
+      background: 'rgba(255,255,255,0.8)',
+      borderRadius: '8px',
+      cursor: 'pointer',
+      position: 'relative',
+      overflow: 'hidden',
+    }}
+  >
+    <Box
+      onClick={() => onToggleSelect(device._id)}
+      sx={{
+        p: 2,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        position: 'relative',
+        zIndex: 1,
+        '&:hover': {
+          background: 'rgba(255,255,255,0.5)',
+        },
+      }}
+    >
+      <Box>
+        <Typography 
+          variant="subtitle1" 
+          sx={{ 
+            fontWeight: 600,
+            color: isSelected ? primaryColor : 'text.primary',
+          }}
+        >
+          {device.name}
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          {device.location} • {device.type.toUpperCase()}
+        </Typography>
+      </Box>
+      <Checkbox
+        checked={isSelected}
+        sx={{
+          color: primaryColor,
+          '&.Mui-checked': {
+            color: primaryColor,
+          },
+        }}
+        onClick={(e) => {
+          e.stopPropagation();
+          onToggleSelect(device._id);
+        }}
+        disableRipple
+      />
+    </Box>
+    <Box
+      sx={{
+        position: 'absolute',
+        inset: 0,
+        border: '2px solid',
+        borderColor: isSelected ? primaryColor : 'transparent',
+        borderRadius: '8px',
+        pointerEvents: 'none',
+        transition: 'border-color 0.1s ease-in-out',
+      }}
+    />
+  </Box>
+));
+
+// Create a new selection manager component
+const DeviceSelectionManager = React.memo(({ devices, onSelectionChange }) => {
+  const [selectedMap, setSelectedMap] = useState(() => new Map());
+
+  const handleToggleSelect = useCallback((deviceId) => {
+    setSelectedMap(prev => {
+      const next = new Map(prev);
+      if (next.has(deviceId)) {
+        next.delete(deviceId);
+      } else {
+        next.set(deviceId, true);
+      }
+      return next;
+    });
+  }, []);
+
+  // Update parent component when selection changes
+  useEffect(() => {
+    const selectedIds = Array.from(selectedMap.keys());
+    onSelectionChange(selectedIds);
+  }, [selectedMap, onSelectionChange]);
+
+  return (
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+      {devices.map(device => (
+        <DeviceItem
+          key={device._id}
+          device={device}
+          isSelected={selectedMap.has(device._id)}
+          onToggleSelect={handleToggleSelect}
+        />
+      ))}
+    </Box>
+  );
+});
+
+// Update the IPConfiguration component to receive props
+const IPConfiguration = ({ 
+  devices, 
+  selectedDevices, 
+  setSelectedDevices, 
+  modelType, 
+  modelName 
+}) => {
+  const handleSelectionChange = useCallback((selectedIds) => {
+    setSelectedDevices(selectedIds);
+  }, [setSelectedDevices]);
+
+  return (
+    <Fade in={true}>
+      <Box sx={{ maxWidth: 600, mx: 'auto', display: 'flex', flexDirection: 'column', gap: 2 }}>
+        <Typography variant="h6" sx={{ color: primaryColor, mb: 2 }}>
+          Configure Devices
+        </Typography>
+        
+        <Paper sx={{ p: 3, background: softGradientBg, borderRadius: '12px' }}>
+          <Typography variant="subtitle2" sx={{ mb: 2, color: primaryColor }}>
+            Select Devices for Deployment
+          </Typography>
+          
+          {devices.length === 0 ? (
+            <Box sx={{ 
+              p: 3, 
+              textAlign: 'center', 
+              background: 'rgba(255,255,255,0.5)',
+              borderRadius: '8px'
+            }}>
+              <Typography color="text.secondary" sx={{ mb: 2 }}>
+                No devices configured
+              </Typography>
+              <Button
+                component={Link}
+                to="/device-management"
+                variant="outlined"
+                size="small"
+                sx={{
+                  color: primaryColor,
+                  borderColor: primaryColor,
+                  '&:hover': {
+                    borderColor: secondaryColor,
+                    background: 'rgba(0, 102, 255, 0.05)',
+                  },
+                }}
+              >
+                Configure Devices
+              </Button>
+            </Box>
+          ) : (
+            <DeviceSelectionManager
+              devices={devices}
+              onSelectionChange={handleSelectionChange}
+            />
+          )}
+        </Paper>
+
+        {selectedDevices.length > 0 && (
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+              Deployment Summary
+            </Typography>
+            <Paper sx={{ p: 2, background: softGradientBg, borderRadius: '12px' }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <StorageIcon sx={{ color: primaryColor }} />
+                  <Typography>Model Type: {modelType}</Typography>
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Memory sx={{ color: primaryColor }} />
+                  <Typography>Model Name: {modelName}</Typography>
+                </Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Layers sx={{ color: primaryColor }} />
+                  <Typography>Selected Devices: {selectedDevices.length}</Typography>
+                </Box>
+              </Box>
+            </Paper>
+          </Box>
+        )}
+      </Box>
+    </Fade>
+  );
+};
+
 function RunScript() {
   const [activeStep, setActiveStep] = useState(0);
   const [ipAddress, setIpAddress] = useState('');
@@ -327,6 +520,8 @@ function RunScript() {
   const [models, setModels] = useState([]);
   const [loading, setLoading] = useState(false);
   const [deploymentStatus, setDeploymentStatus] = useState(null);
+  const [devices, setDevices] = useState([]);
+  const [selectedDevices, setSelectedDevices] = useState([]);
 
   const fetchModels = useCallback(() => {
     const endpoint = modelType === 'pretrained' ? '/models' : '/custom-models';
@@ -339,19 +534,41 @@ function RunScript() {
     fetchModels();
   }, [modelType, fetchModels]);
 
+  useEffect(() => {
+    fetchDevices();
+  }, []);
+
+  const fetchDevices = async () => {
+    try {
+      const response = await api.get('/device-management/devices');
+      setDevices(response.data.data || []);
+    } catch (error) {
+      console.error('Error fetching devices:', error);
+    }
+  };
+
   const handleNext = () => setActiveStep(prev => prev + 1);
   const handleBack = () => setActiveStep(prev => prev - 1);
 
   const handleExecute = async () => {
-    if (!modelName || !ipAddress) {
-      alert('Please fill in all fields.');
+    if (!modelName || selectedDevices.length === 0) {
+      alert('Please select a model and at least one device.');
       return;
     }
 
     setLoading(true);
     try {
+      const streamUrls = selectedDevices
+        .map(deviceId => devices.find(d => d._id === deviceId)?.streamUrl)
+        .filter(Boolean)
+        .join(',');
+
       const endpoint = modelType === 'pretrained' ? '/streams/run-script' : `/custom-model/${modelName}/run-script`;
-      const payload = modelType === 'pretrained' ? { ipAddress, modelName } : { ipAddress };
+      const payload = { 
+        ipAddress: streamUrls,
+        modelName: modelType === 'pretrained' ? modelName : undefined 
+      };
+      
       await api.post(endpoint, payload);
       setDeploymentStatus('success');
       handleNext();
@@ -651,68 +868,6 @@ function RunScript() {
     </Grid>
   );
 
-  const IPConfiguration = () => (
-    <Fade in={true}>
-      <Box sx={{ 
-        maxWidth: 500, 
-        mx: 'auto',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 2 
-      }}>
-        <Typography variant="h6" sx={{ color: primaryColor, mb: 2 }}>
-          Configure Device
-        </Typography>
-        
-        <TextField
-          label="Device IP Address"
-          value={ipAddress}
-          onChange={(e) => setIpAddress(e.target.value)}
-          fullWidth
-          variant="outlined"
-          placeholder="Enter IP Address"
-          InputProps={{
-            startAdornment: <Layers sx={{ mr: 1, color: primaryColor }} />,
-          }}
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              background: '#fff',
-              borderRadius: '12px',
-              '&:hover fieldset': {
-                borderColor: primaryColor,
-              },
-              '&.Mui-focused fieldset': {
-                borderColor: primaryColor,
-              },
-            },
-          }}
-        />
-
-        <Box sx={{ mt: 2 }}>
-          <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-            Deployment Summary
-          </Typography>
-          <Paper sx={{ p: 2, background: softGradientBg, borderRadius: '12px' }}>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <StorageIcon sx={{ color: primaryColor }} />
-                <Typography>Model Type: {modelType}</Typography>
-              </Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Memory sx={{ color: primaryColor }} />
-                <Typography>Model Name: {modelName}</Typography>
-              </Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Layers sx={{ color: primaryColor }} />
-                <Typography>Device List: {ipAddress}</Typography>
-              </Box>
-            </Box>
-          </Paper>
-        </Box>
-      </Box>
-    </Fade>
-  );
-
   const SuccessView = () => (
     <motion.div
       initial={{ opacity: 0, scale: 0.9 }}
@@ -771,10 +926,30 @@ function RunScript() {
   );
 
   const steps = [
-    { title: 'Select Model Type', component: <ModelTypeSelection /> },
-    { title: 'Choose Model', component: <ModelSelection /> },
-    { title: 'Configure Devices', component: <IPConfiguration /> },
-    { title: 'Success', component: <SuccessView /> }
+    {
+      title: 'Model Type',
+      component: <ModelTypeSelection />,
+    },
+    {
+      title: 'Model Selection',
+      component: <ModelSelection />,
+    },
+    {
+      title: 'Device Configuration',
+      component: (
+        <IPConfiguration 
+          devices={devices}
+          selectedDevices={selectedDevices}
+          setSelectedDevices={setSelectedDevices}
+          modelType={modelType}
+          modelName={modelName}
+        />
+      ),
+    },
+    {
+      title: 'Deployment Status',
+      component: <SuccessView />,
+    },
   ];
 
   return (

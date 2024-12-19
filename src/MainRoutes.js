@@ -12,6 +12,7 @@ import InferPretrainedModelVideo from './pages/InferVideo/InferPretrainedModelVi
 import LiveMonitor from './pages/LiveMonitor';
 import Forecasting from './pages/Forecasting/Forecasting';
 import Login from './pages/Login';
+import DeviceManagement from './pages/DeviceManagement/DeviceManagement';
 
 // Protected Route component
 const ProtectedRoute = ({ children, isAdmin }) => {
@@ -56,6 +57,7 @@ function MainRoutes() {
           <Route path="infer-video" element={<InferPretrainedModelVideo />} />
           <Route path="infer-custom-video" element={<InferCustomModelVideo />} />
           <Route path="forecasting" element={<Forecasting />} />
+          <Route path="device-management" element={<DeviceManagement />} />
         </Route>
 
         {/* Redirect unauthenticated users to login */}

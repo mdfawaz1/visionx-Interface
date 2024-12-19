@@ -23,6 +23,7 @@ import {
   Analytics,
   ChevronLeft,
   ChevronRight,
+  Videocam,
 } from '@mui/icons-material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 
@@ -70,6 +71,7 @@ function Sidebar() {
         { text: 'Infer Custom Model Video', icon: <SmartDisplay sx={{ fontSize: 22 }} />, path: '/infer-custom-video', color: '#6366f1' },
         { text: 'Live Monitor', icon: <MonitorHeart sx={{ fontSize: 22 }} />, path: '/live-monitor', color: '#0d9488' },
         { text: 'Forecasting', icon: <Analytics sx={{ fontSize: 22 }} />, path: '/forecasting', color: '#ea580c' },
+        { text: 'Device Management', icon: <Videocam sx={{ fontSize: 22 }} />, path: '/device-management', color: '#0369a1' },
       ];
     } else {
       return [
