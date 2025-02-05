@@ -165,7 +165,7 @@ function Sidebar() {
                 >
                   <ListItemIcon
                     sx={{
-                      color: location.pathname === item.path ? item.color : '#64748b',
+                      color: location.pathname === item.path ? item.color : '#6B7280',
                       minWidth: isCollapsed ? '100%' : '40px',
                       justifyContent: isCollapsed ? 'center' : 'flex-start',
                       transition: 'all 0.2s ease-in-out',
@@ -181,7 +181,7 @@ function Sidebar() {
                       '& .MuiTypography-root': {
                         fontWeight: location.pathname === item.path ? 600 : 500,
                         fontSize: '0.9rem',
-                        color: location.pathname === item.path ? item.color : '#334155',
+                        color: location.pathname === item.path ? item.color : '#1F2937',
                       },
                     }}
                   />
