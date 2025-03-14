@@ -65,7 +65,7 @@ const VideoFeed = ({ serverUrl, streamId }) => {
   };
 
   return (
-    <div style={{ position: 'relative', minHeight: '300px' }}>
+    <div style={{ position: 'relative', height: '100%', width: '100%' }}>
       {isLoading && (
         <Box 
           sx={{ 
@@ -96,10 +96,12 @@ const VideoFeed = ({ serverUrl, streamId }) => {
         alt="Live Inference"
         onLoad={handleImageLoad}
         style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
           width: '100%',
-          height: '300px',
-          objectFit: 'cover',
-          borderRadius: '8px',
+          height: '100%',
+          objectFit: 'contain',
           display: isLoading || error ? 'none' : 'block',
         }}
       />

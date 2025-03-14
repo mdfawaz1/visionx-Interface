@@ -353,6 +353,8 @@ function VideoPreview({ file, onRemove }) {
       animate={{ opacity: 1, scale: 1 }}
       style={{
         width: '100%',
+        maxHeight: 'calc(100vh - 300px)',
+        height: '400px',
         background: 'rgba(0, 0, 0, 0.3)',
         borderRadius: '15px',
         overflow: 'hidden',
@@ -364,8 +366,9 @@ function VideoPreview({ file, onRemove }) {
         src={preview}
         style={{
           width: '100%',
+          height: '100%',
+          objectFit: 'contain',
           borderRadius: '15px',
-          marginBottom: '-6px',
           background: '#000'
         }}
         controls
@@ -633,97 +636,112 @@ function InferCustomModelVideo() {
               width: '100%',
               height: '100%',
               display: 'flex',
-              flexDirection: 'column'
+              flexDirection: 'column',
+              gap: '1.5rem'
             }}
           >
             <h2 style={{ marginBottom: '1.5rem', textAlign: 'center' }}>Upload Video</h2>
-            {videoFile ? (
-              <VideoPreview file={videoFile} onRemove={() => setVideoFile(null)} />
-            ) : (
-              <motion.div
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onDragEnter={handleDrag}
-                onDragLeave={handleDrag}
-                onDragOver={handleDrag}
-                onDrop={handleDrop}
-                style={{
-                  width: '100%',
-                  minHeight: '260px',
-                  border: `3px dashed ${dragActive ? '#ffffff' : 'rgba(255, 255, 255, 0.3)'}`,
-                  borderRadius: '15px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  flexDirection: 'column',
-                  background: dragActive 
-                    ? 'rgba(255, 255, 255, 0.15)' 
-                    : 'linear-gradient(145deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)',
-                  transition: 'all 0.3s ease',
-                  cursor: 'pointer',
-                  backdropFilter: 'blur(10px)',
-                  boxShadow: dragActive 
-                    ? '0 8px 32px rgba(31, 38, 135, 0.3)' 
-                    : '0 4px 16px rgba(31, 38, 135, 0.1)'
-                }}
-              >
+            
+            <div style={{ 
+              flex: 1,
+              minHeight: 0,
+              position: 'relative',
+              overflowY: 'auto'
+            }}>
+              {videoFile ? (
+                <VideoPreview file={videoFile} onRemove={() => setVideoFile(null)} />
+              ) : (
                 <motion.div
-                  animate={{
-                    y: dragActive ? -10 : 0,
-                    scale: dragActive ? 1.1 : 1
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onDragEnter={handleDrag}
+                  onDragLeave={handleDrag}
+                  onDragOver={handleDrag}
+                  onDrop={handleDrop}
+                  style={{
+                    width: '100%',
+                    minHeight: '260px',
+                    border: `3px dashed ${dragActive ? '#ffffff' : 'rgba(255, 255, 255, 0.3)'}`,
+                    borderRadius: '15px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    flexDirection: 'column',
+                    background: dragActive 
+                      ? 'rgba(255, 255, 255, 0.15)' 
+                      : 'linear-gradient(145deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)',
+                    transition: 'all 0.3s ease',
+                    cursor: 'pointer',
+                    backdropFilter: 'blur(10px)',
+                    boxShadow: dragActive 
+                      ? '0 8px 32px rgba(31, 38, 135, 0.3)' 
+                      : '0 4px 16px rgba(31, 38, 135, 0.1)'
                   }}
-                  transition={{ type: "spring", stiffness: 300 }}
                 >
-                  <div style={{ 
-                    fontSize: '4rem', 
-                    marginBottom: '1rem',
-                    opacity: dragActive ? 1 : 0.7
-                  }}>
-                    {dragActive ? '📥' : '📁'}
-                  </div>
-                  <p style={{ 
-                    fontSize: '1.2rem', 
-                    marginBottom: '0.5rem',
-                    color: dragActive ? '#fff' : 'rgba(255,255,255,0.8)'
-                  }}>
-                    {dragActive ? 'Drop your video here' : 'Drag and drop your video here'}
-                  </p>
-                  <p style={{ 
-                    fontSize: '0.9rem', 
-                    opacity: 0.6,
-                    marginBottom: '1rem'
-                  }}>
-                    or
-                  </p>
-                  <input
-                    type="file"
-                    accept="video/*"
-                    onChange={e => setVideoFile(e.target.files?.[0])}
-                    style={{ display: 'none' }}
-                    id="video-input"
-                  />
-                  <label 
-                    htmlFor="video-input"
-                    style={{
-                      background: 'rgba(255, 255, 255, 0.2)',
-                      padding: '0.8rem 1.5rem',
-                      borderRadius: '50px',
-                      cursor: 'pointer',
-                      fontSize: '0.9rem',
-                      transition: 'all 0.3s ease',
-                      border: '1px solid rgba(255,255,255,0.2)'
+                  <motion.div
+                    animate={{
+                      y: dragActive ? -10 : 0,
+                      scale: dragActive ? 1.1 : 1
                     }}
+                    transition={{ type: "spring", stiffness: 300 }}
                   >
-                    Browse Files
-                  </label>
+                    <div style={{ 
+                      fontSize: '4rem', 
+                      marginBottom: '1rem',
+                      opacity: dragActive ? 1 : 0.7
+                    }}>
+                      {dragActive ? '📥' : '📁'}
+                    </div>
+                    <p style={{ 
+                      fontSize: '1.2rem', 
+                      marginBottom: '0.5rem',
+                      color: dragActive ? '#fff' : 'rgba(255,255,255,0.8)'
+                    }}>
+                      {dragActive ? 'Drop your video here' : 'Drag and drop your video here'}
+                    </p>
+                    <p style={{ 
+                      fontSize: '0.9rem', 
+                      opacity: 0.6,
+                      marginBottom: '1rem'
+                    }}>
+                      or
+                    </p>
+                    <input
+                      type="file"
+                      accept="video/*"
+                      onChange={e => setVideoFile(e.target.files?.[0])}
+                      style={{ display: 'none' }}
+                      id="video-input"
+                    />
+                    <label 
+                      htmlFor="video-input"
+                      style={{
+                        background: 'rgba(255, 255, 255, 0.2)',
+                        padding: '0.8rem 1.5rem',
+                        borderRadius: '50px',
+                        cursor: 'pointer',
+                        fontSize: '0.9rem',
+                        transition: 'all 0.3s ease',
+                        border: '1px solid rgba(255,255,255,0.2)'
+                      }}
+                    >
+                      Browse Files
+                    </label>
+                  </motion.div>
                 </motion.div>
-              </motion.div>
-            )}
+              )}
+            </div>
             
             <div style={{ 
               display: 'flex', 
-              gap: '1rem', 
-              marginTop: '1.5rem'
+              gap: '1rem',
+              marginTop: 'auto',
+              position: 'sticky',
+              bottom: 0,
+              background: 'rgba(255, 255, 255, 0.1)',
+              backdropFilter: 'blur(10px)',
+              padding: '1rem',
+              borderRadius: '10px'
             }}>
               <AnimatedButton
                 onClick={() => setCurrentStep(0)}

@@ -256,7 +256,7 @@ const VideoGrid = styled.div`
   gap: 2rem;
   width: 100%;
   max-width: 1400px;
-  padding: 0.5rem;
+  padding: 1rem;
   background: #ffffff;
   border-radius: 16px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
@@ -269,10 +269,12 @@ const VideoGrid = styled.div`
 const VideoCard = styled(motion.div)`
   background: #ffffff;
   border-radius: 12px;
-  padding: 0.5rem;
+  padding: 0.75rem;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
   border: 2px solid #f0f0f0;
   transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
   
   &:hover {
     border-color: #2563eb;
@@ -284,8 +286,14 @@ const VideoCard = styled(motion.div)`
 const VideoContainer = styled.div`
   position: relative;
   width: 100%;
-  padding-top: 5.25%;
-  margin-bottom: 1rem;
+  height: 400px;
+  margin-bottom: 0.75rem;
+  background-color: #000;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   img, video {
     position: absolute;
@@ -293,8 +301,7 @@ const VideoContainer = styled.div`
     left: 0;
     width: 100%;
     height: 100%;
-    object-fit: cover;
-    border-radius: 4px;
+    object-fit: contain;
   }
 `;
 
@@ -307,6 +314,7 @@ const LiveIndicator = styled.div`
   background-color: #ff0000;
   border-radius: 50%;
   animation: ${pulseAnimation} 1.5s infinite;
+  z-index: 10;
 `;
 
 const StatusIndicator = styled.div`
@@ -468,18 +476,18 @@ const serverUrls = [
   { url: 'http://localhost:5008', name: 'Server 1' },
   { url: 'http://localhost:5009', name: 'Server 2' },
   { url: 'http://localhost:5010', name: 'Server 3' },
-  { url: 'http://localhost:5011', name: 'Server 4' },
-  { url: 'http://localhost:5012', name: 'Server 5' },
-  { url: 'http://localhost:5013', name: 'Server 6' },
-  { url: 'http://localhost:5014', name: 'Server 7' },
-  { url: 'http://localhost:5015', name: 'Server 8' },
-  { url: 'http://localhost:5016', name: 'Server 9' },
-  { url: 'http://localhost:5017', name: 'Server 10' },
-  { url: 'http://localhost:5018', name: 'Server 11' },
-  { url: 'http://localhost:5019', name: 'Server 12' },
-  { url: 'http://localhost:5020', name: 'Server 13' },
-  { url: 'http://localhost:5021', name: 'Server 14' },
-  { url: 'http://192.168.1.111:5009', name: 'Server 15' },
+  // { url: 'http://localhost:5011', name: 'Server 4' },
+  // { url: 'http://localhost:5012', name: 'Server 5' },
+  // { url: 'http://localhost:5013', name: 'Server 6' },
+  // { url: 'http://localhost:5014', name: 'Server 7' },
+  // { url: 'http://localhost:5015', name: 'Server 8' },
+  // { url: 'http://localhost:5016', name: 'Server 9' },
+  // { url: 'http://localhost:5017', name: 'Server 10' },
+  // { url: 'http://localhost:5018', name: 'Server 11' },
+  // { url: 'http://localhost:5019', name: 'Server 12' },
+  // { url: 'http://localhost:5020', name: 'Server 13' },
+  // { url: 'http://localhost:5021', name: 'Server 14' },
+  // { url: 'http://192.168.1.111:5009', name: 'Server 15' },
 ];
 
 export default function LiveMonitor() {
@@ -506,7 +514,7 @@ export default function LiveMonitor() {
               'Content-Type': 'application/json'
             },
             mode: 'cors',
-            signal: AbortSignal.timeout(2000)
+            signal: AbortSignal.timeout(5000)
           });
           
           if (!response.ok) {
@@ -540,7 +548,7 @@ export default function LiveMonitor() {
   useEffect(() => {
     fetchStreams();
 
-    const interval = setInterval(fetchStreams, 2000);
+    const interval = setInterval(fetchStreams, 5000);
 
     return () => {
       clearInterval(interval);
