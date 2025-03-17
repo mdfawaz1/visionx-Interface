@@ -1,3 +1,5 @@
+"use client"
+
 import React, { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence, useAnimation } from 'framer-motion'
 import api from '../../api'
@@ -348,9 +350,7 @@ function VideoPreview({ file, onRemove }) {
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
+    <div
       style={{
         width: '100%',
         maxHeight: 'calc(100vh - 300px)',
@@ -358,7 +358,8 @@ function VideoPreview({ file, onRemove }) {
         background: 'rgba(0, 0, 0, 0.3)',
         borderRadius: '15px',
         overflow: 'hidden',
-        position: 'relative'
+        position: 'relative',
+        transition: 'all 0.3s ease'
       }}
     >
       <video
@@ -389,7 +390,8 @@ function VideoPreview({ file, onRemove }) {
         justifyContent: 'space-between',
         alignItems: 'center',
         opacity: isPlaying ? 0 : 1,
-        transition: 'opacity 0.3s ease'
+        transition: 'opacity 0.3s ease',
+        pointerEvents: isPlaying ? 'none' : 'auto'
       }}>
         <div style={{ fontSize: '0.9rem' }}>
           Preview Mode
@@ -437,7 +439,7 @@ function VideoPreview({ file, onRemove }) {
           Change Video
         </AnimatedButton>
       </div>
-    </motion.div>
+    </div>
   );
 }
 

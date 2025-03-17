@@ -13,6 +13,7 @@ import LiveMonitor from './pages/LiveMonitor';
 import Forecasting from './pages/Forecasting/Forecasting';
 import Login from './pages/Login';
 import DeviceManagement from './pages/DeviceManagement/DeviceManagement';
+import LogViewer from './pages/LogViewer/LogViewer';
 
 // Protected Route component
 const ProtectedRoute = ({ children, isAdmin }) => {
@@ -46,6 +47,15 @@ function MainRoutes() {
           } 
         />
         
+        {/* <Route 
+          path="/logs" 
+          element={
+            <ProtectedRoute>
+              <LogViewer />
+            </ProtectedRoute>
+          } 
+        />
+         */}
         {/* Admin Routes */}
         <Route path="/" element={<ProtectedRoute isAdmin={true}><Outlet /></ProtectedRoute>}>
           <Route index element={<Home />} />
@@ -58,6 +68,7 @@ function MainRoutes() {
           <Route path="infer-custom-video" element={<InferCustomModelVideo />} />
           <Route path="forecasting" element={<Forecasting />} />
           <Route path="device-management" element={<DeviceManagement />} />
+          <Route path="log-viewer" element={<LogViewer />} />
         </Route>
 
         {/* Redirect unauthenticated users to login */}

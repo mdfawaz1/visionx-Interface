@@ -205,10 +205,10 @@ function ModelCard({ model, selected, onClick, onNext }) {
 function VideoPreview({ file, onRemove }) {
   const [preview, setPreview] = useState('');
   const videoRef = useRef(null);
-  const [duration, setDuration] = useState(0);
   const [videoInfo, setVideoInfo] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
+  const containerRef = useRef(null);
 
   useEffect(() => {
     if (file) {
@@ -217,32 +217,51 @@ function VideoPreview({ file, onRemove }) {
       
       const video = document.createElement('video');
       video.src = url;
-      video.onloadedmetadata = () => {
-        setVideoInfo({
-          duration: Math.round(video.duration),
-          width: video.videoWidth,
-          height: video.videoHeight
-        });
-      };
+      
+      const loadMetadata = new Promise((resolve) => {
+        video.onloadedmetadata = () => {
+          resolve({
+            duration: Math.round(video.duration),
+            width: video.videoWidth,
+            height: video.videoHeight
+          });
+        };
+      });
 
-      return () => URL.revokeObjectURL(url);
+      loadMetadata.then(info => {
+        setVideoInfo(info);
+      });
+
+      return () => {
+        URL.revokeObjectURL(url);
+        video.remove();
+      };
     }
   }, [file]);
 
-  const formatDuration = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
+  // Debounced time update handler
+  const handleTimeUpdate = React.useCallback((e) => {
+    if (!e.target) return;
+    
+    const timeUpdateTimeout = setTimeout(() => {
+      setCurrentTime(e.target.currentTime);
+    }, 250);
+    
+    return () => clearTimeout(timeUpdateTimeout);
+  }, []);
 
-  const handleTimeUpdate = (e) => {
-    setCurrentTime(e.target.currentTime);
-  };
+  // Handle play/pause with debounce
+  const handlePlay = React.useCallback(() => {
+    setIsPlaying(true);
+  }, []);
+
+  const handlePause = React.useCallback(() => {
+    setIsPlaying(false);
+  }, []);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, scale: 0.9 }}
-      animate={{ opacity: 1, scale: 1 }}
+    <div
+      ref={containerRef}
       style={{
         width: '100%',
         maxHeight: 'calc(100vh - 300px)',
@@ -250,39 +269,45 @@ function VideoPreview({ file, onRemove }) {
         background: 'rgba(0, 0, 0, 0.3)',
         borderRadius: '15px',
         overflow: 'hidden',
-        position: 'relative'
+        position: 'relative',
+        transition: 'all 0.3s ease'
       }}
     >
-      <video
-        ref={videoRef}
-        src={preview}
-        style={{
-          width: '100%',
-          height: '100%',
-          objectFit: 'contain',
-          borderRadius: '15px',
-          background: '#000'
-        }}
-        controls
-        onTimeUpdate={handleTimeUpdate}
-        onPlay={() => setIsPlaying(true)}
-        onPause={() => setIsPlaying(false)}
-      />
+      <div style={{ height: '100%' }}>
+        <video
+          ref={videoRef}
+          src={preview}
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'contain',
+            borderRadius: '15px',
+            background: '#000'
+          }}
+          controls
+          onTimeUpdate={handleTimeUpdate}
+          onPlay={handlePlay}
+          onPause={handlePause}
+        />
+      </div>
       
-      <div style={{
-        position: 'absolute',
-        top: 0,
-        left: 0,
-        right: 0,
-        padding: '1rem',
-        background: 'linear-gradient(rgba(0,0,0,0.8), transparent)',
-        color: 'white',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        opacity: isPlaying ? 0 : 1,
-        transition: 'opacity 0.3s ease'
-      }}>
+      <div
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          padding: '1rem',
+          background: 'linear-gradient(rgba(0,0,0,0.8), transparent)',
+          color: 'white',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          opacity: isPlaying ? 0 : 1,
+          transition: 'opacity 0.2s ease',
+          pointerEvents: isPlaying ? 'none' : 'auto'
+        }}
+      >
         <div style={{ fontSize: '0.9rem' }}>
           Preview Mode
         </div>
@@ -298,23 +323,25 @@ function VideoPreview({ file, onRemove }) {
         )}
       </div>
       
-      <div style={{
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        padding: '1rem',
-        background: 'linear-gradient(transparent, rgba(0,0,0,0.8))',
-        color: 'white',
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'flex-end'
-      }}>
+      <div
+        style={{
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          padding: '1rem',
+          background: 'linear-gradient(transparent, rgba(0,0,0,0.8))',
+          color: 'white',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-end'
+        }}
+      >
         <div>
           <h4 style={{ margin: '0 0 0.5rem 0' }}>{file.name}</h4>
           {videoInfo && (
             <div style={{ fontSize: '0.9rem', opacity: 0.8 }}>
-              {formatDuration(videoInfo.duration)} • {videoInfo.width}x{videoInfo.height}
+              {videoInfo.duration} seconds • {videoInfo.width}x{videoInfo.height}
             </div>
           )}
         </div>
@@ -329,7 +356,7 @@ function VideoPreview({ file, onRemove }) {
           Change Video
         </AnimatedButton>
       </div>
-    </motion.div>
+    </div>
   );
 }
 
