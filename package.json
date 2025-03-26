@@ -35,7 +35,8 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "start:pm2": "pm2 start npm --name 'visionx-frontend' -- start"
   },
   "eslintConfig": {
     "extends": [
@@ -57,6 +58,7 @@
   },
   "devDependencies": {
     "@babel/plugin-proposal-class-properties": "^7.18.6",
-    "@babel/plugin-syntax-dynamic-import": "^7.8.3"
+    "@babel/plugin-syntax-dynamic-import": "^7.8.3",
+    "pm2": "^5.3.0"
   }
 }
