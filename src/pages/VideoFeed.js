@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { CircularProgress, Box } from '@mui/material';
 
-const VideoFeed = ({ serverUrl, streamId }) => {
+const VideoFeed = ({ serverUrl, streamId, isFullscreen = false }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const imgRef = useRef(null);
@@ -64,30 +64,49 @@ const VideoFeed = ({ serverUrl, streamId }) => {
     setError(null);
   };
 
+  const containerStyle = {
+    position: 'relative',
+    height: '100%',
+    width: '100%',
+    backgroundColor: 'black'
+  };
+
+  const loadingStyle = {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)'
+  };
+
+  const errorStyle = {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: 'translate(-50%, -50%)',
+    color: 'red',
+    textAlign: 'center',
+    maxWidth: '80%'
+  };
+
+  const imageStyle = {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    objectFit: 'contain',
+    display: isLoading || error ? 'none' : 'block',
+  };
+
   return (
-    <div style={{ position: 'relative', height: '100%', width: '100%' }}>
+    <div style={containerStyle}>
       {isLoading && (
-        <Box 
-          sx={{ 
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)'
-          }}
-        >
-          <CircularProgress />
+        <Box sx={loadingStyle}>
+          <CircularProgress color="primary" />
         </Box>
       )}
       {error && (
-        <Box 
-          sx={{ 
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            color: 'red'
-          }}
-        >
+        <Box sx={errorStyle}>
           {error}
         </Box>
       )}
@@ -95,15 +114,7 @@ const VideoFeed = ({ serverUrl, streamId }) => {
         ref={imgRef}
         alt="Live Inference"
         onLoad={handleImageLoad}
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          objectFit: 'contain',
-          display: isLoading || error ? 'none' : 'block',
-        }}
+        style={imageStyle}
       />
     </div>
   );

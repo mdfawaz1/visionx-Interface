@@ -59,7 +59,7 @@ function Navbar() {
           >
             VisionX
           </Typography>
-          <Typography
+          {/* <Typography
             variant="caption"
             sx={{
               color: '#90CAF9',
@@ -71,7 +71,7 @@ function Navbar() {
             }}
           >
             (Beta 0.1.0)
-          </Typography>
+          </Typography> */}
         </Box>
 
         {/* User Menu */}

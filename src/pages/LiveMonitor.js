@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styled, { createGlobalStyle, keyframes } from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import VideoFeed from './VideoFeed';
@@ -9,6 +9,10 @@ import Close from '@mui/icons-material/Close';
 import ChevronRight from '@mui/icons-material/ChevronRight';
 import Add from '@mui/icons-material/Add';
 import VideoIcon from '@mui/icons-material/Videocam';
+import Fullscreen from '@mui/icons-material/Fullscreen';
+import FullscreenExit from '@mui/icons-material/FullscreenExit';
+import ArrowBackIos from '@mui/icons-material/ArrowBackIos';
+import ArrowForwardIos from '@mui/icons-material/ArrowForwardIos';
 
 const primaryColor = '#0066FF';
 const secondaryColor = '#FF2E93';
@@ -294,6 +298,10 @@ const VideoContainer = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
+  
+  &:hover .video-controls {
+    opacity: 1;
+  }
 
   img, video {
     position: absolute;
@@ -472,22 +480,258 @@ const HeaderCloseButton = styled(motion.button)`
   }
 `;
 
+const FullscreenModal = styled(motion.div)`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.9);
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  box-sizing: border-box;
+  
+  @media screen and (orientation: landscape) and (max-height: 500px) {
+    padding: 0.5rem;
+  }
+`;
+
+const FullscreenVideoContainer = styled.div`
+  position: relative;
+  width: 90%;
+  height: 85%;
+  max-width: 1600px;
+  max-height: 85vh;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #000;
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+  
+  @media (max-width: 768px) {
+    width: 95%;
+    height: 70%;
+    max-height: 75vh;
+  }
+  
+  @media screen and (orientation: landscape) and (max-height: 500px) {
+    width: 98%;
+    height: 95%;
+    max-height: 95vh;
+    border-radius: 6px;
+  }
+`;
+
+const FullscreenControls = styled.div`
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  gap: 10px;
+  z-index: 10;
+  
+  @media (max-width: 768px) {
+    top: 10px;
+    right: 10px;
+    gap: 8px;
+  }
+  
+  @media screen and (orientation: landscape) and (max-height: 500px) {
+    top: 8px;
+    right: 8px;
+  }
+`;
+
+const FullscreenStreamInfo = styled.div`
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 12px 20px;
+  border-radius: 8px;
+  color: white;
+  font-weight: 500;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  
+  @media (max-width: 768px) {
+    bottom: 10px;
+    left: 10px;
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    max-width: 60%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  
+  @media screen and (orientation: landscape) and (max-height: 500px) {
+    bottom: 8px;
+    left: 8px;
+    padding: 6px 10px;
+    font-size: 0.8rem;
+    max-width: 50%;
+  }
+`;
+
+const KeyboardHelp = styled.div`
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 10px 16px;
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.85rem;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  
+  @media (max-width: 768px) {
+    bottom: 10px;
+    right: 10px;
+    padding: 8px 10px;
+    font-size: 0.75rem;
+    gap: 8px;
+  }
+  
+  @media (max-width: 480px) {
+    display: none;
+  }
+  
+  @media screen and (orientation: landscape) and (max-height: 500px) {
+    bottom: 8px;
+    right: 8px;
+    padding: 6px 8px;
+    font-size: 0.7rem;
+  }
+`;
+
+const KeyboardKey = styled.span`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  padding: 0 5px;
+  margin: 0 2px;
+  font-family: monospace;
+  font-weight: bold;
+`;
+
+const LiveDot = styled.div`
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #ff0000;
+  animation: ${pulseAnimation} 1.5s infinite;
+`;
+
+const ControlButton = styled(motion.button)`
+  background: rgba(0, 0, 0, 0.6);
+  border: none;
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: ${primaryColor};
+    transform: scale(1.1);
+  }
+
+  svg {
+    font-size: 20px;
+  }
+`;
+
+const ExpandButton = styled(ControlButton)`
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 10;
+  width: 36px;
+  height: 36px;
+  background: rgba(0, 0, 0, 0.6);
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+  
+  &:hover {
+    background: ${primaryColor};
+  }
+`;
+
+const FullscreenNavButton = styled(motion.button)`
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.3);
+  border: none;
+  width: 40px;
+  height: 60px;
+  border-radius: ${props => props.left ? '0 30px 30px 0' : '30px 0 0 30px'};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  cursor: pointer;
+  z-index: 10;
+  opacity: 0.5;
+  transition: opacity 0.3s, background 0.3s;
+  ${props => props.left ? 'left: 0;' : 'right: 0;'}
+  
+  &:hover {
+    opacity: 0.8;
+    background: rgba(0, 102, 255, 0.5);
+  }
+  
+  @media (max-width: 768px) {
+    opacity: 0.4;
+    width: 30px;
+    height: 50px;
+  }
+  
+  @media screen and (orientation: landscape) and (max-height: 500px) {
+    height: 40px;
+  }
+`;
+
 const serverUrls = [
-  { url: 'http://localhost:5008', name: 'Server 1' },
-  { url: 'http://localhost:5009', name: 'Server 2' },
-  { url: 'http://localhost:5010', name: 'Server 3' },
-  { url: 'http://localhost:5011', name: 'Server 4' },
-  { url: 'http://localhost:5012', name: 'Server 5' },
-  { url: 'http://localhost:5013', name: 'Server 6' },
-  { url: 'http://localhost:5014', name: 'Server 7' },
-  { url: 'http://localhost:5015', name: 'Server 8' },
-  { url: 'http://localhost:5016', name: 'Server 9' },
-  { url: 'http://localhost:5017', name: 'Server 10' },
-  { url: 'http://localhost:5018', name: 'Server 11' },
-  { url: 'http://localhost:5019', name: 'Server 12' },
-  { url: 'http://localhost:5020', name: 'Server 13' },
-  { url: 'http://localhost:5021', name: 'Server 14' },
-  { url: 'http://192.168.1.111:5009', name: 'Server 15' },
+  { url: 'https://infer1.vxdemo.pro', name: 'Server 1' },
+  { url: 'https://infer2.vxdemo.pro', name: 'Server 2' },
+  { url: 'https://infer3.vxdemo.pro', name: 'Server 3' },
+  { url: 'https://infer4.vxdemo.pro', name: 'Server 4' },
+  { url: 'https://infer5.vxdemo.pro', name: 'Server 5' },
+  { url: 'http://localhost:5008', name: 'Server 6' },
+  { url: 'http://localhost:5009', name: 'Server 7 ' },
+  { url: 'http://localhost:5010', name: 'Server 8' },
+  { url: 'http://localhost:5011', name: 'Server 9' },
+  { url: 'http://localhost:5012', name: 'Server 10' },
+  { url: 'http://localhost:5013', name: 'Server 11' },
+  { url: 'http://localhost:5014', name: 'Server 12' },
+  { url: 'http://localhost:5015', name: 'Server 13' },
+  // { url: 'http://localhost:5014', name: 'Server 7' },
+  // { url: 'http://localhost:5015', name: 'Server 8' },
+  // { url: 'http://localhost:5016', name: 'Server 9' },
+  // { url: 'http://localhost:5017', name: 'Server 10' },
+  // { url: 'http://localhost:5018', name: 'Server 11' },
+  // { url: 'http://localhost:5019', name: 'Server 12' },
+  // { url: 'http://localhost:5020', name: 'Server 13' },
+  // { url: 'http://localhost:5021', name: 'Server 14' },
+  // { url: 'http://192.168.1.111:5009', name: 'Server 15' },
 ];
 
 export default function LiveMonitor() {
@@ -502,6 +746,23 @@ export default function LiveMonitor() {
   });
   const [error, setError] = useState(null);
   const [notification, setNotification] = useState(null);
+  const [fullscreenStream, setFullscreenStream] = useState(null);
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
+
+  // Lock body scroll when fullscreen is active
+  useEffect(() => {
+    if (fullscreenStream) {
+      // Save the current overflow style
+      const originalStyle = window.getComputedStyle(document.body).overflow;
+      // Prevent scrolling on the body
+      document.body.style.overflow = 'hidden';
+      // Re-enable scrolling when component unmounts or fullscreen is closed
+      return () => {
+        document.body.style.overflow = originalStyle;
+      };
+    }
+  }, [fullscreenStream]);
 
   const fetchStreams = async () => {
     try {
@@ -564,17 +825,85 @@ export default function LiveMonitor() {
   }, [selectedServer]);
 
   useEffect(() => {
-    const handleEsc = (event) => {
+    const handleKeyDown = (event) => {
       if (event.key === 'Escape') {
-        setSelectedServer(null);
+        if (fullscreenStream) {
+          setFullscreenStream(null);
+        } else {
+          setSelectedServer(null);
+        }
+      } else if (fullscreenStream && (event.key === 'ArrowLeft' || event.key === 'ArrowRight')) {
+        // Navigate between streams with arrow keys when in fullscreen mode
+        const currentStreamIndex = selectedStreams.findIndex(
+          s => s.serverUrl === fullscreenStream.serverUrl && s.streamId === fullscreenStream.streamId
+        );
+        
+        if (currentStreamIndex !== -1) {
+          let nextIndex;
+          if (event.key === 'ArrowRight') {
+            nextIndex = (currentStreamIndex + 1) % selectedStreams.length;
+          } else {
+            nextIndex = (currentStreamIndex - 1 + selectedStreams.length) % selectedStreams.length;
+          }
+          
+          setFullscreenStream(selectedStreams[nextIndex]);
+        }
       }
     };
-    window.addEventListener('keydown', handleEsc);
+    window.addEventListener('keydown', handleKeyDown);
 
     return () => {
-      window.removeEventListener('keydown', handleEsc);
+      window.removeEventListener('keydown', handleKeyDown);
     };
-  }, []);
+  }, [fullscreenStream, selectedStreams]);
+
+  // Handle touch navigation in fullscreen
+  useEffect(() => {
+    const handleTouchStart = (e) => {
+      setTouchEnd(null);
+      setTouchStart(e.targetTouches[0].clientX);
+    };
+
+    const handleTouchMove = (e) => {
+      setTouchEnd(e.targetTouches[0].clientX);
+    };
+
+    const handleTouchEnd = () => {
+      if (!touchStart || !touchEnd || !fullscreenStream) return;
+      
+      const distance = touchStart - touchEnd;
+      const isSwipe = Math.abs(distance) > 50; // Minimum swipe distance
+      
+      if (isSwipe && selectedStreams.length > 1) {
+        const currentStreamIndex = selectedStreams.findIndex(
+          s => s.serverUrl === fullscreenStream.serverUrl && s.streamId === fullscreenStream.streamId
+        );
+        
+        if (currentStreamIndex !== -1) {
+          let nextIndex;
+          if (distance > 0) { // Swipe left
+            nextIndex = (currentStreamIndex + 1) % selectedStreams.length;
+          } else { // Swipe right
+            nextIndex = (currentStreamIndex - 1 + selectedStreams.length) % selectedStreams.length;
+          }
+          
+          setFullscreenStream(selectedStreams[nextIndex]);
+        }
+      }
+    };
+
+    if (fullscreenStream) {
+      window.addEventListener('touchstart', handleTouchStart);
+      window.addEventListener('touchmove', handleTouchMove);
+      window.addEventListener('touchend', handleTouchEnd);
+      
+      return () => {
+        window.removeEventListener('touchstart', handleTouchStart);
+        window.removeEventListener('touchmove', handleTouchMove);
+        window.removeEventListener('touchend', handleTouchEnd);
+      };
+    }
+  }, [fullscreenStream, touchStart, touchEnd, selectedStreams]);
 
   const handleStreamToggle = (serverUrl, streamId) => {
     setSelectedStreams(prevSelected => {
@@ -623,11 +952,120 @@ export default function LiveMonitor() {
     setSelectedStreams(prev => prev.filter(s => s.serverUrl !== serverUrl));
   };
 
+  const toggleFullscreen = (serverUrl, streamId) => {
+    if (fullscreenStream && fullscreenStream.serverUrl === serverUrl && fullscreenStream.streamId === streamId) {
+      setFullscreenStream(null);
+    } else {
+      setFullscreenStream({ serverUrl, streamId });
+    }
+  };
+
+  const navigateToNextStream = (direction) => {
+    if (!fullscreenStream || selectedStreams.length <= 1) return;
+    
+    const currentStreamIndex = selectedStreams.findIndex(
+      s => s.serverUrl === fullscreenStream.serverUrl && s.streamId === fullscreenStream.streamId
+    );
+    
+    if (currentStreamIndex !== -1) {
+      let nextIndex;
+      if (direction === 'next') {
+        nextIndex = (currentStreamIndex + 1) % selectedStreams.length;
+      } else {
+        nextIndex = (currentStreamIndex - 1 + selectedStreams.length) % selectedStreams.length;
+      }
+      
+      setFullscreenStream(selectedStreams[nextIndex]);
+    }
+  };
+
   return (
     <>
       <GlobalStyle />
       <GridBackground />
       {notification && <Notification>{notification}</Notification>}
+      
+      <AnimatePresence>
+        {fullscreenStream && (
+          <FullscreenModal
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <FullscreenVideoContainer
+              as={motion.div}
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.9 }}
+              transition={{ type: "spring", stiffness: 300, damping: 25 }}
+            >
+              <VideoFeed 
+                serverUrl={fullscreenStream.serverUrl} 
+                streamId={fullscreenStream.streamId} 
+                isFullscreen={true}
+              />
+              
+              {selectedStreams.length > 1 && (
+                <>
+                  <FullscreenNavButton 
+                    left 
+                    onClick={() => navigateToNextStream('prev')}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                  >
+                    <ArrowBackIos fontSize="small" />
+                  </FullscreenNavButton>
+                  
+                  <FullscreenNavButton 
+                    onClick={() => navigateToNextStream('next')}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                  >
+                    <ArrowForwardIos fontSize="small" />
+                  </FullscreenNavButton>
+                </>
+              )}
+              
+              <FullscreenControls>
+               <ControlButton 
+                  onClick={() => setFullscreenStream(null)}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  aria-label="Exit fullscreen"
+                >
+                   <FullscreenExit />
+
+                </ControlButton> 
+                {/* <ControlButton 
+                  onClick={() => handleStreamToggle(fullscreenStream.serverUrl, fullscreenStream.streamId)}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  aria-label="Remove stream"
+                >
+            
+
+                </ControlButton> */}
+              </FullscreenControls>
+              <FullscreenStreamInfo>
+                <LiveDot />
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  Stream {fullscreenStream.streamId} - {Object.entries(streams)
+                    .find(([url]) => url === fullscreenStream.serverUrl)?.[1]?.name || 'Unknown Server'}
+                </span>
+              </FullscreenStreamInfo>
+              
+              {selectedStreams.length > 1 && (
+                <KeyboardHelp>
+                  Navigate: <KeyboardKey>←</KeyboardKey><KeyboardKey>→</KeyboardKey> 
+                  Exit: <KeyboardKey>ESC</KeyboardKey>
+                </KeyboardHelp>
+              )}
+            </FullscreenVideoContainer>
+          </FullscreenModal>
+        )}
+      </AnimatePresence>
+      
       <Container>
         <Title
           initial={{ y: -50 }}
@@ -770,6 +1208,14 @@ export default function LiveMonitor() {
               <VideoContainer>
                 <LiveIndicator />
                 <VideoFeed serverUrl={serverUrl} streamId={streamId} />
+                <ExpandButton
+                  className="video-controls"
+                  onClick={() => toggleFullscreen(serverUrl, streamId)}
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                >
+                  <Fullscreen />
+                </ExpandButton>
               </VideoContainer>
               <Button
                 onClick={() => handleStreamToggle(serverUrl, streamId)}

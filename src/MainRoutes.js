@@ -14,6 +14,8 @@ import Forecasting from './pages/Forecasting/Forecasting';
 import Login from './pages/Login';
 import DeviceManagement from './pages/DeviceManagement/DeviceManagement';
 import LogViewer from './pages/LogViewer/LogViewer';
+import Guide from './pages/Guide';
+import SafetyDashboard from './pages/SafetyDashboard/SafetyDashboard';
 
 // Protected Route component
 const ProtectedRoute = ({ children, isAdmin }) => {
@@ -34,8 +36,9 @@ function MainRoutes() {
   return (
     <main style={{ paddingLeft: 0, paddingTop: 64 }}>
       <Routes>
-        {/* Public Route */}
+        {/* Public Routes */}
         <Route path="/login" element={<Login />} />
+        <Route path="/guide" element={<Guide />} />
         
         {/* Protected User Route */}
         <Route 
@@ -69,6 +72,7 @@ function MainRoutes() {
           <Route path="forecasting" element={<Forecasting />} />
           <Route path="device-management" element={<DeviceManagement />} />
           <Route path="log-viewer" element={<LogViewer />} />
+          <Route path="safety-dashboard" element={<SafetyDashboard />} />
         </Route>
 
         {/* Redirect unauthenticated users to login */}

@@ -28,6 +28,8 @@ import {
   Devices,
   ListAlt,
   TextSnippet,
+  Help,
+  HealthAndSafety,
 } from '@mui/icons-material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 
@@ -77,10 +79,13 @@ function Sidebar() {
         { text: 'Forecasting', icon: <Analytics sx={{ fontSize: 22 }} />, path: '/forecasting', color: '#ea580c' },
         { text: 'Device Management', icon: <Videocam sx={{ fontSize: 22 }} />, path: '/device-management', color: '#0369a1' },
         { text: 'Log Viewer', icon: <TextSnippet />, path: '/log-viewer', color: '#0d9488', roles: ['admin', 'user'] },
+        { text: 'User Guide', icon: <Help />, path: '/guide', color: '#8b5cf6' },
+        { text: 'Safety Dashboard', icon: <HealthAndSafety sx={{ fontSize: 22 }} />, path: '/safety-dashboard', color: '#e11d48' },
       ];
     } else {
       return [
         { text: 'Live Monitor', icon: <MonitorHeart sx={{ fontSize: 22 }} />, path: '/live-monitor', color: '#0d9488' },
+        { text: 'User Guide', icon: <Help />, path: '/guide', color: '#8b5cf6' },
       ];
     }
   };
