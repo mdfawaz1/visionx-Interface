@@ -710,11 +710,6 @@ const FullscreenNavButton = styled(motion.button)`
 `;
 
 const serverUrls = [
-  { url: 'https://infer1.vxdemo.pro', name: 'Server 1' },
-  { url: 'https://infer2.vxdemo.pro', name: 'Server 2' },
-  { url: 'https://infer3.vxdemo.pro', name: 'Server 3' },
-  { url: 'https://infer4.vxdemo.pro', name: 'Server 4' },
-  { url: 'https://infer5.vxdemo.pro', name: 'Server 5' },
   { url: 'http://localhost:5008', name: 'Server 6' },
   { url: 'http://localhost:5009', name: 'Server 7 ' },
   { url: 'http://localhost:5010', name: 'Server 8' },
