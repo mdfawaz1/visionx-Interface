@@ -30,8 +30,10 @@ import {
   TextSnippet,
   Help,
   HealthAndSafety,
+  AdminPanelSettings,
 } from '@mui/icons-material';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
+import { useAuth } from '../contexts/AuthContext';
 
 const theme = createTheme({
   typography: {
@@ -57,40 +59,67 @@ const theme = createTheme({
   }
 });
 
-const DRAWER_WIDTH = 240;  // Keep original width
-const COLLAPSED_DRAWER_WIDTH = 65;  // Keep original width
+const DRAWER_WIDTH = 240;
+const COLLAPSED_DRAWER_WIDTH = 65;
 
 function Sidebar() {
   const location = useLocation();
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const userRole = localStorage.getItem('userRole');
+  const { user, canAccessPage, hasPermission, isMaster, isAdmin } = useAuth();
 
-  const getMenuItems = () => {
-    if (userRole === 'admin') {
-      return [
-        { text: 'Home', icon: <Dashboard sx={{ fontSize: 22 }} />, path: '/', color: '#2563eb' },
-        { text: 'Models', icon: <Psychology sx={{ fontSize: 22 }} />, path: '/models', color: '#7c3aed' },
-        { text: 'Deployment', icon: <RocketLaunch sx={{ fontSize: 22 }} />, path: '/run-script', color: '#0891b2' },
-        { text: 'Train Model', icon: <Science sx={{ fontSize: 22 }} />, path: '/train-model', color: '#059669' },
-        { text: 'Custom Models', icon: <Architecture sx={{ fontSize: 22 }} />, path: '/custom-models', color: '#c026d3' },
-        { text: 'Infer Models Video', icon: <MovieFilter sx={{ fontSize: 22 }} />, path: '/infer-video', color: '#dc2626' },
-        { text: 'Infer Custom Model Video', icon: <SmartDisplay sx={{ fontSize: 22 }} />, path: '/infer-custom-video', color: '#6366f1' },
-        { text: 'Live Monitor', icon: <MonitorHeart sx={{ fontSize: 22 }} />, path: '/live-monitor', color: '#0d9488' },
-        { text: 'Forecasting', icon: <Analytics sx={{ fontSize: 22 }} />, path: '/forecasting', color: '#ea580c' },
-        { text: 'Device Management', icon: <Videocam sx={{ fontSize: 22 }} />, path: '/device-management', color: '#0369a1' },
-        { text: 'Log Viewer', icon: <TextSnippet />, path: '/log-viewer', color: '#0d9488', roles: ['admin', 'user'] },
-        { text: 'User Guide', icon: <Help />, path: '/guide', color: '#8b5cf6' },
-        { text: 'Safety Dashboard', icon: <HealthAndSafety sx={{ fontSize: 22 }} />, path: '/safety-dashboard', color: '#e11d48' },
-      ];
-    } else {
-      return [
-        { text: 'Live Monitor', icon: <MonitorHeart sx={{ fontSize: 22 }} />, path: '/live-monitor', color: '#0d9488' },
-        { text: 'User Guide', icon: <Help />, path: '/guide', color: '#8b5cf6' },
-      ];
-    }
+  const allMenuItems = [
+    { text: 'Home', icon: <Dashboard sx={{ fontSize: 22 }} />, path: '/', color: '#2563eb', requiresAuth: true },
+    { text: 'Models', icon: <Psychology sx={{ fontSize: 22 }} />, path: '/models', color: '#7c3aed', requiredPage: 'models' },
+    { text: 'Deployment', icon: <RocketLaunch sx={{ fontSize: 22 }} />, path: '/run-script', color: '#0891b2', requiredPage: 'monitoring' },
+    { text: 'Train Model', icon: <Science sx={{ fontSize: 22 }} />, path: '/train-model', color: '#059669', requiredPage: 'training' },
+    { text: 'Custom Models', icon: <Architecture sx={{ fontSize: 22 }} />, path: '/custom-models', color: '#c026d3', requiredPermission: 'canAccessCustomModels', requiredPage: 'customModels' },
+    { text: 'Infer Models Video', icon: <MovieFilter sx={{ fontSize: 22 }} />, path: '/infer-video', color: '#dc2626', requiredPage: 'models' },
+    { text: 'Infer Custom Model Video', icon: <SmartDisplay sx={{ fontSize: 22 }} />, path: '/infer-custom-video', color: '#6366f1', requiredPermission: 'canAccessCustomModels', requiredPage: 'customModels' },
+    { text: 'Live Monitor', icon: <MonitorHeart sx={{ fontSize: 22 }} />, path: '/live-monitor', color: '#0d9488', requiredPage: 'monitoring' },
+    { text: 'Forecasting', icon: <Analytics sx={{ fontSize: 22 }} />, path: '/forecasting', color: '#ea580c', requiredPage: 'forecasting' },
+    { text: 'Device Management', icon: <Videocam sx={{ fontSize: 22 }} />, path: '/device-management', color: '#0369a1', requiredPage: 'devices' },
+    { text: 'Log Viewer', icon: <TextSnippet sx={{ fontSize: 22 }} />, path: '/log-viewer', color: '#0d9488', requiredPage: 'logs' },
+    { text: 'Safety Dashboard', icon: <HealthAndSafety sx={{ fontSize: 22 }} />, path: '/safety-dashboard', color: '#e11d48', requiredPage: 'incidents' },
+    { text: 'User Management', icon: <AdminPanelSettings sx={{ fontSize: 22 }} />, path: '/user-management', color: '#f59e0b', requiredPermission: 'canManageUsers' },
+    { text: 'User Guide', icon: <Help sx={{ fontSize: 22 }} />, path: '/guide', color: '#8b5cf6', requiresAuth: false },
+  ];
+
+  // Filter menu items based on user permissions
+  const getVisibleMenuItems = () => {
+    return allMenuItems.filter(item => {
+      // Always show items that don't require auth
+      if (item.requiresAuth === false) return true;
+      
+      // Hide items if user is not authenticated
+      if (!user) return false;
+      
+      // Master users see everything
+      if (isMaster()) return true;
+      
+      // For non-master users, check all requirements
+      let hasAccess = true;
+      
+      // Check page permission if required
+      if (item.requiredPage) {
+        hasAccess = hasAccess && canAccessPage(item.requiredPage);
+      }
+      
+      // Check feature permission if required
+      if (item.requiredPermission) {
+        hasAccess = hasAccess && hasPermission(item.requiredPermission);
+      }
+      
+      // If item only requires auth (like Home), check if user has at least one permission
+      if (item.requiresAuth && !item.requiredPage && !item.requiredPermission) {
+        // Show Home to all authenticated users
+        hasAccess = true;
+      }
+      
+      return hasAccess;
+    });
   };
 
-  const menuItems = getMenuItems();
+  const menuItems = getVisibleMenuItems();
 
   return (
     <ThemeProvider theme={theme}>

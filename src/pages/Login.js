@@ -18,8 +18,12 @@ import {
   Fade,
   Zoom,
   useMediaQuery,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { 
   Visibility, 
   VisibilityOff, 
@@ -30,8 +34,13 @@ import {
   ArrowForward as ArrowForwardIcon,
   Security as SecurityIcon,
   Help as HelpIcon,
+  AdminPanelSettings as AdminIcon,
+  Business as BusinessIcon,
 } from '@mui/icons-material';
 import { motion } from 'framer-motion';
+import { useAuth } from '../contexts/AuthContext';
+import { authService } from '../services/authService';
+import { toast } from 'react-toastify';
 
 function Login() {
   const [username, setUsername] = useState('');
@@ -41,17 +50,59 @@ function Login() {
   const [error, setError] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
+  const [showMasterSetup, setShowMasterSetup] = useState(false);
+  const [checkingMaster, setCheckingMaster] = useState(true);
+  const [masterFormData, setMasterFormData] = useState({
+    username: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    tenantName: ''
+  });
+  
   const navigate = useNavigate();
+  const location = useLocation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const { login, isAuthenticated } = useAuth();
 
-  // Check for saved credentials
+  // Redirect if already authenticated
   useEffect(() => {
-    const savedUsername = localStorage.getItem('savedUsername');
-    if (savedUsername) {
-      setUsername(savedUsername);
-      setRememberMe(true);
+    if (isAuthenticated) {
+      const from = location.state?.from?.pathname || '/';
+      navigate(from);
     }
+  }, [isAuthenticated, navigate, location]);
+
+  // Check if master user exists
+  useEffect(() => {
+    const checkMasterExists = async () => {
+      try {
+        // Try to login with a dummy request to see the response
+        const response = await fetch('http://localhost:26000/api/v1/auth/master/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: '', email: '', password: '', tenantName: '' })
+        });
+        
+        const data = await response.json();
+        
+        if (response.status === 400 && data.error === 'Master user already exists') {
+          setShowMasterSetup(false);
+        } else {
+          // Any other error means we should show the master setup
+          setShowMasterSetup(true);
+        }
+      } catch (error) {
+        console.error('Error checking master user:', error);
+        // If we can't reach the backend, show login form
+        setShowMasterSetup(false);
+      } finally {
+        setCheckingMaster(false);
+      }
+    };
+
+    checkMasterExists();
   }, []);
 
   const handleLogin = async (e) => {
@@ -60,30 +111,59 @@ function Login() {
     setLoading(true);
 
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const result = await login(username, password);
       
-      if (username === 'admin' && password === 'admin123') {
+      if (result.success) {
         if (rememberMe) {
           localStorage.setItem('savedUsername', username);
         } else {
           localStorage.removeItem('savedUsername');
         }
-        localStorage.setItem('userRole', 'admin');
-        navigate('/');
-      } else if (username === 'user' && password === 'user123') {
-        if (rememberMe) {
-          localStorage.setItem('savedUsername', username);
-        } else {
-          localStorage.removeItem('savedUsername');
-        }
-        localStorage.setItem('userRole', 'user');
-        navigate('/live-monitor');
+        
+        const from = location.state?.from?.pathname || '/';
+        navigate(from);
       } else {
-        setError('Invalid username or password');
+        setError(result.error || 'Login failed');
       }
     } catch (err) {
       setError('An error occurred. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleMasterSetup = async () => {
+    if (masterFormData.password !== masterFormData.confirmPassword) {
+      toast.error('Passwords do not match');
+      return;
+    }
+
+    if (masterFormData.password.length < 8) {
+      toast.error('Password must be at least 8 characters long');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await authService.createMasterUser({
+        username: masterFormData.username,
+        email: masterFormData.email,
+        password: masterFormData.password,
+        tenantName: masterFormData.tenantName || 'Master Organization'
+      });
+      
+      toast.success('Master user created successfully! You can now login.');
+      setShowMasterSetup(false);
+      setUsername(masterFormData.username);
+      setMasterFormData({
+        username: '',
+        email: '',
+        password: '',
+        confirmPassword: '',
+        tenantName: ''
+      });
+    } catch (error) {
+      toast.error(error.response?.data?.error || 'Failed to create master user');
     } finally {
       setLoading(false);
     }
@@ -99,6 +179,14 @@ function Login() {
     }
   };
 
+  if (checkingMaster) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
   return (
     <Box
       sx={{
@@ -110,17 +198,6 @@ function Login() {
         background: `linear-gradient(135deg, ${theme.palette.primary.dark} 0%, ${theme.palette.secondary.dark} 100%)`,
         position: 'relative',
         overflow: 'hidden',
-        '&::before': {
-          content: '""',
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          background: 'url(/images/pattern.png)',
-          opacity: 0.05,
-          zIndex: 0,
-        },
       }}
     >
       {/* Animated background elements */}
@@ -210,6 +287,15 @@ function Login() {
               <Typography variant="body1" sx={{ textAlign: 'center', mb: 4 }}>
                 Advanced Security Monitoring System
               </Typography>
+              {showMasterSetup && (
+                <Alert severity="info" sx={{ 
+                  backgroundColor: 'rgba(255, 255, 255, 0.9)', 
+                  color: theme.palette.info.dark,
+                  mt: 2 
+                }}>
+                  No master user found. Please set up the master account.
+                </Alert>
+              )}
             </motion.div>
             
             <Box sx={{ mt: 'auto', textAlign: 'center' }}>
@@ -237,7 +323,7 @@ function Login() {
                   mb: 1,
                 }}
               >
-                Welcome Back
+                {showMasterSetup ? 'Initial Setup Required' : 'Welcome Back'}
               </Typography>
               <Typography
                 variant="body2"
@@ -245,7 +331,7 @@ function Login() {
                   color: theme.palette.text.secondary,
                 }}
               >
-                Sign in to access your dashboard
+                {showMasterSetup ? 'Create your master account to get started' : 'Sign in to access your dashboard'}
               </Typography>
             </Box>
 
@@ -257,9 +343,6 @@ function Login() {
                     width: '100%', 
                     mb: 3,
                     borderRadius: 2,
-                    '& .MuiAlert-icon': {
-                      fontSize: 24,
-                    },
                   }}
                 >
                   {error}
@@ -267,172 +350,221 @@ function Login() {
               </Fade>
             )}
 
-            <Box 
-              component="form" 
-              onSubmit={handleLogin} 
-              sx={{ 
-                width: '100%',
-                '& .MuiTextField-root': {
-                  mb: 2.5,
-                },
-              }}
-            >
-              <TextField
-                margin="normal"
-                required
-                fullWidth
-                id="username"
-                label="Username"
-                name="username"
-                autoComplete="username"
-                autoFocus
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                onKeyPress={handleKeyPress}
-                onFocus={() => setIsFocused(true)}
-                onBlur={() => setIsFocused(false)}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <PersonIcon color={isFocused ? 'primary' : 'action'} />
-                    </InputAdornment>
-                  ),
-                }}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
-                    transition: 'all 0.2s ease-in-out',
-                    '&:hover': {
-                      boxShadow: '0 0 0 2px rgba(25, 118, 210, 0.2)',
-                    },
-                    '&.Mui-focused': {
-                      boxShadow: '0 0 0 2px rgba(25, 118, 210, 0.2)',
-                    },
+            {!showMasterSetup ? (
+              <Box 
+                component="form" 
+                onSubmit={handleLogin} 
+                sx={{ 
+                  width: '100%',
+                  '& .MuiTextField-root': {
+                    mb: 2.5,
                   },
-                }}
-              />
-              <TextField
-                margin="normal"
-                required
-                fullWidth
-                name="password"
-                label="Password"
-                type={showPassword ? 'text' : 'password'}
-                id="password"
-                autoComplete="current-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onKeyPress={handleKeyPress}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <LockIcon color="action" />
-                    </InputAdornment>
-                  ),
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton
-                        onClick={handleTogglePasswordVisibility}
-                        edge="end"
-                        aria-label="toggle password visibility"
-                      >
-                        {showPassword ? <VisibilityOff /> : <Visibility />}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 2,
-                    transition: 'all 0.2s ease-in-out',
-                    '&:hover': {
-                      boxShadow: '0 0 0 2px rgba(25, 118, 210, 0.2)',
-                    },
-                    '&.Mui-focused': {
-                      boxShadow: '0 0 0 2px rgba(25, 118, 210, 0.2)',
-                    },
-                  },
-                }}
-              />
-
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                <FormControlLabel
-                  control={
-                    <Checkbox 
-                      checked={rememberMe} 
-                      onChange={(e) => setRememberMe(e.target.checked)} 
-                      color="primary"
-                    />
-                  }
-                  label="Remember me"
-                />
-                <Link 
-                  href="#" 
-                  variant="body2" 
-                  sx={{ 
-                    color: theme.palette.primary.main,
-                    textDecoration: 'none',
-                    '&:hover': {
-                      textDecoration: 'underline',
-                    },
-                  }}
-                >
-                  Forgot password?
-                </Link>
-              </Box>
-
-              <Button
-                type="submit"
-                fullWidth
-                variant="contained"
-                size="large"
-                disabled={loading}
-                endIcon={loading ? <CircularProgress size={20} color="inherit" /> : <ArrowForwardIcon />}
-                sx={{
-                  py: 1.5,
-                  borderRadius: 2,
-                  textTransform: 'none',
-                  fontSize: '1.1rem',
-                  fontWeight: 600,
-                  boxShadow: 3,
-                  background: `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.primary.dark})`,
-                  '&:hover': {
-                    transform: 'translateY(-2px)',
-                    boxShadow: 4,
-                    background: `linear-gradient(90deg, ${theme.palette.primary.dark}, ${theme.palette.primary.main})`,
-                  },
-                  transition: 'all 0.2s ease-in-out',
                 }}
               >
-                {loading ? 'Signing in...' : 'Sign In'}
-              </Button>
-            </Box>
+                <TextField
+                  margin="normal"
+                  required
+                  fullWidth
+                  id="username"
+                  label="Username or Email"
+                  name="username"
+                  autoComplete="username"
+                  autoFocus
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  onFocus={() => setIsFocused(true)}
+                  onBlur={() => setIsFocused(false)}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <PersonIcon color={isFocused ? 'primary' : 'action'} />
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                    },
+                  }}
+                />
+                <TextField
+                  margin="normal"
+                  required
+                  fullWidth
+                  name="password"
+                  label="Password"
+                  type={showPassword ? 'text' : 'password'}
+                  id="password"
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <LockIcon color="action" />
+                      </InputAdornment>
+                    ),
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton
+                          onClick={handleTogglePasswordVisibility}
+                          edge="end"
+                        >
+                          {showPassword ? <VisibilityOff /> : <Visibility />}
+                        </IconButton>
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                    },
+                  }}
+                />
+
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                  <FormControlLabel
+                    control={
+                      <Checkbox 
+                        checked={rememberMe} 
+                        onChange={(e) => setRememberMe(e.target.checked)} 
+                        color="primary"
+                      />
+                    }
+                    label="Remember me"
+                  />
+                </Box>
+
+                <Button
+                  type="submit"
+                  fullWidth
+                  variant="contained"
+                  size="large"
+                  disabled={loading}
+                  endIcon={loading ? <CircularProgress size={20} color="inherit" /> : <ArrowForwardIcon />}
+                  sx={{
+                    py: 1.5,
+                    borderRadius: 2,
+                    textTransform: 'none',
+                    fontSize: '1.1rem',
+                    fontWeight: 600,
+                    boxShadow: 3,
+                  }}
+                >
+                  {loading ? 'Signing in...' : 'Sign In'}
+                </Button>
+              </Box>
+            ) : (
+              <Box sx={{ width: '100%' }}>
+                <TextField
+                  margin="normal"
+                  required
+                  fullWidth
+                  label="Username"
+                  value={masterFormData.username}
+                  onChange={(e) => setMasterFormData({ ...masterFormData, username: e.target.value })}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <AdminIcon color="action" />
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{ mb: 2 }}
+                />
+                <TextField
+                  margin="normal"
+                  required
+                  fullWidth
+                  label="Email"
+                  type="email"
+                  value={masterFormData.email}
+                  onChange={(e) => setMasterFormData({ ...masterFormData, email: e.target.value })}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <EmailIcon color="action" />
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{ mb: 2 }}
+                />
+                <TextField
+                  margin="normal"
+                  required
+                  fullWidth
+                  label="Password"
+                  type="password"
+                  value={masterFormData.password}
+                  onChange={(e) => setMasterFormData({ ...masterFormData, password: e.target.value })}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <LockIcon color="action" />
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{ mb: 2 }}
+                />
+                <TextField
+                  margin="normal"
+                  required
+                  fullWidth
+                  label="Confirm Password"
+                  type="password"
+                  value={masterFormData.confirmPassword}
+                  onChange={(e) => setMasterFormData({ ...masterFormData, confirmPassword: e.target.value })}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <LockIcon color="action" />
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{ mb: 2 }}
+                />
+                <TextField
+                  margin="normal"
+                  fullWidth
+                  label="Organization Name"
+                  value={masterFormData.tenantName}
+                  onChange={(e) => setMasterFormData({ ...masterFormData, tenantName: e.target.value })}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <BusinessIcon color="action" />
+                      </InputAdornment>
+                    ),
+                  }}
+                  sx={{ mb: 3 }}
+                />
+                <Button
+                  fullWidth
+                  variant="contained"
+                  size="large"
+                  onClick={handleMasterSetup}
+                  disabled={loading}
+                  endIcon={loading ? <CircularProgress size={20} color="inherit" /> : <AdminIcon />}
+                  sx={{
+                    py: 1.5,
+                    borderRadius: 2,
+                    textTransform: 'none',
+                    fontSize: '1.1rem',
+                    fontWeight: 600,
+                  }}
+                >
+                  {loading ? 'Creating Master Account...' : 'Create Master Account'}
+                </Button>
+              </Box>
+            )}
 
             <Divider sx={{ my: 3 }}>
               <Typography variant="body2" color="text.secondary">
-                OR
+                HELP
               </Typography>
             </Divider>
-
-            <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                Don't have an account?
-              </Typography>
-              <Button
-                variant="outlined"
-                color="primary"
-                sx={{
-                  borderRadius: 2,
-                  textTransform: 'none',
-                  fontWeight: 600,
-                }}
-              >
-                Contact Administrator
-              </Button>
-            </Box>
-
-            <Box sx={{ mt: 4, textAlign: 'center' }}>
-            </Box>
             
             <Box sx={{ mt: 3, textAlign: 'center' }}>
               <Button
@@ -455,4 +587,4 @@ function Login() {
   );
 }
 
-export default Login; 
+export default Login;

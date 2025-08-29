@@ -1,6 +1,6 @@
 // src/MainRoutes.js
 import React from 'react';
-import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import Home from './pages/Home';
 import ModelsList from './pages/Models/ModelsList';
 import RunScript from './pages/RunScript';
@@ -16,21 +16,8 @@ import DeviceManagement from './pages/DeviceManagement/DeviceManagement';
 import LogViewer from './pages/LogViewer/LogViewer';
 import Guide from './pages/Guide';
 import SafetyDashboard from './pages/SafetyDashboard/SafetyDashboard';
-
-// Protected Route component
-const ProtectedRoute = ({ children, isAdmin }) => {
-  const userRole = localStorage.getItem('userRole');
-  
-  if (!userRole) {
-    return <Navigate to="/login" replace />;
-  }
-  
-  if (isAdmin && userRole !== 'admin') {
-    return <Navigate to="/live-monitor" replace />;
-  }
-  
-  return children || <Outlet />;
-};
+import UserManagement from './pages/UserManagement/UserManagement';
+import ProtectedRoute from './components/ProtectedRoute';
 
 function MainRoutes() {
   return (
@@ -40,43 +27,129 @@ function MainRoutes() {
         <Route path="/login" element={<Login />} />
         <Route path="/guide" element={<Guide />} />
         
-        {/* Protected User Route */}
+        {/* Protected Routes */}
+        <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+        
+        {/* Model Management Routes */}
         <Route 
-          path="/live-monitor" 
+          path="/models" 
           element={
-            <ProtectedRoute>
-              <LiveMonitor />
+            <ProtectedRoute requiredPage="models">
+              <ModelsList />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/custom-models" 
+          element={
+            <ProtectedRoute requiredPermission="canAccessCustomModels">
+              <CustomModelsList />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/custom-models/:modelName" 
+          element={
+            <ProtectedRoute requiredPermission="canAccessCustomModels">
+              <CustomModelDetails />
             </ProtectedRoute>
           } 
         />
         
-        {/* <Route 
-          path="/logs" 
+        {/* Training and Inference Routes */}
+        <Route 
+          path="/train-model" 
           element={
-            <ProtectedRoute>
+            <ProtectedRoute requiredPage="training">
+              <TrainModel />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/infer-video" 
+          element={
+            <ProtectedRoute requiredPage="models">
+              <InferPretrainedModelVideo />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/infer-custom-video" 
+          element={
+            <ProtectedRoute requiredPermission="canAccessCustomModels">
+              <InferCustomModelVideo />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* Monitoring and Analytics Routes */}
+        <Route 
+          path="/live-monitor" 
+          element={
+            <ProtectedRoute requiredPage="monitoring">
+              <LiveMonitor />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/run-script" 
+          element={
+            <ProtectedRoute requiredPage="monitoring">
+              <RunScript />
+            </ProtectedRoute>
+          } 
+        />
+        <Route 
+          path="/safety-dashboard" 
+          element={
+            <ProtectedRoute requiredPage="incidents">
+              <SafetyDashboard />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* Device Management Routes */}
+        <Route 
+          path="/device-management" 
+          element={
+            <ProtectedRoute requiredPage="devices">
+              <DeviceManagement />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* Forecasting Routes */}
+        <Route 
+          path="/forecasting" 
+          element={
+            <ProtectedRoute requiredPage="forecasting">
+              <Forecasting />
+            </ProtectedRoute>
+          } 
+        />
+        
+        {/* System Routes */}
+        <Route 
+          path="/log-viewer" 
+          element={
+            <ProtectedRoute requiredPage="logs">
               <LogViewer />
             </ProtectedRoute>
           } 
         />
-         */}
+        
         {/* Admin Routes */}
-        <Route path="/" element={<ProtectedRoute isAdmin={true}><Outlet /></ProtectedRoute>}>
-          <Route index element={<Home />} />
-          <Route path="models" element={<ModelsList />} />
-          <Route path="run-script" element={<RunScript />} />
-          <Route path="train-model" element={<TrainModel />} />
-          <Route path="custom-models" element={<CustomModelsList />} />
-          <Route path="custom-models/:modelName" element={<CustomModelDetails />} />
-          <Route path="infer-video" element={<InferPretrainedModelVideo />} />
-          <Route path="infer-custom-video" element={<InferCustomModelVideo />} />
-          <Route path="forecasting" element={<Forecasting />} />
-          <Route path="device-management" element={<DeviceManagement />} />
-          <Route path="log-viewer" element={<LogViewer />} />
-          <Route path="safety-dashboard" element={<SafetyDashboard />} />
-        </Route>
+        <Route 
+          path="/user-management" 
+          element={
+            <ProtectedRoute requiredPermission="canManageUsers">
+              <UserManagement />
+            </ProtectedRoute>
+          } 
+        />
 
-        {/* Redirect unauthenticated users to login */}
-        <Route path="*" element={<Navigate to="/login" replace />} />
+        {/* Default redirect */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </main>
   );
